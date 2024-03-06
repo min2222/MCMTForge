@@ -17,9 +17,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.world.level.entity.EntityAccess;
 import net.minecraft.world.level.entity.EntityLookup;
 
-//FIXME cause error
 @Mixin(EntityLookup.class)
 public abstract class EntityLookupMixin<T extends EntityAccess> {
+	
     @Shadow
     @Final
     @Mutable

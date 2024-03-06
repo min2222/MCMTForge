@@ -21,6 +21,7 @@ import net.minecraft.world.level.chunk.ImposterProtoChunk;
 
 @Mixin(Level.class)
 public abstract class LevelMixin implements LevelAccessor, AutoCloseable {
+	
     @Shadow
     @Final
     @Mutable

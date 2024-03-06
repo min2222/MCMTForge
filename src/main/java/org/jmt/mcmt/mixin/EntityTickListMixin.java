@@ -13,6 +13,7 @@ import net.minecraft.world.level.entity.EntityTickList;
 
 @Mixin(EntityTickList.class)
 public abstract class EntityTickListMixin {
+	
     @Shadow
     private Int2ObjectMap<Entity> active = new Int2ObjectConcurrentHashMap<>();
 

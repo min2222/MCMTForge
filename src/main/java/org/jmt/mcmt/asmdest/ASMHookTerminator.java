@@ -130,6 +130,7 @@ public class ASMHookTerminator {
     }
 
     public static void callTick(ServerLevel serverworld, BooleanSupplier hasTimeLeft, MinecraftServer server) {
+        serverworld.random = new ThreadSafeLegacyRandomSource(RandomSupport.generateUniqueSeed());
         if (GeneralConfig.disabled || GeneralConfig.disableWorld) {
             try {
                 serverworld.tick(hasTimeLeft);
@@ -153,7 +154,6 @@ public class ASMHookTerminator {
             worldPool.execute(() -> {
                 try {
                     currentWorlds.incrementAndGet();
-                    serverworld.random = new ThreadSafeLegacyRandomSource(RandomSupport.generateUniqueSeed());
                     serverworld.tick(hasTimeLeft);
 					if (GeneralConfig.disableWorldPostTick) {
 						synchronized (net.minecraftforge.event.ForgeEventFactory.class) {
@@ -248,6 +248,7 @@ public class ASMHookTerminator {
     }
 
     public static void callTickChunks(ServerLevel world, LevelChunk chunk, int k) {
+    	world.random = new ThreadSafeLegacyRandomSource(RandomSupport.generateUniqueSeed());
         if (GeneralConfig.disabled || GeneralConfig.disableEnvironment) {
             world.tickChunk(chunk, k);
             return;
@@ -284,6 +285,7 @@ public class ASMHookTerminator {
     }
 
     public static void callEntityTick(Consumer<Entity> tickConsumer, Entity entityIn, ServerLevel serverworld) {
+        serverworld.random = new ThreadSafeLegacyRandomSource(RandomSupport.generateUniqueSeed());
         if (GeneralConfig.disabled || GeneralConfig.disableEntity) {
         	tickConsumer.accept(entityIn);
             return;
@@ -329,6 +331,7 @@ public class ASMHookTerminator {
     }
 
     public static void callBlockEntityTick(TickingBlockEntity tte, Level world) {
+    	world.random = new ThreadSafeLegacyRandomSource(RandomSupport.generateUniqueSeed());
         if ((world instanceof ServerLevel) && tte instanceof LevelChunk.RebindableTickingBlockEntityWrapper && (((LevelChunk.RebindableTickingBlockEntityWrapper) tte).ticker instanceof LevelChunk.BoundTickingBlockEntity<?>)) {
             if (GeneralConfig.disabled || GeneralConfig.disableTileEntity) {
                 tte.tick();

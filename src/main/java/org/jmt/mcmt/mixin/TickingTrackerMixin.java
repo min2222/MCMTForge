@@ -16,6 +16,7 @@ import net.minecraft.util.SortedArraySet;
 
 @Mixin(TickingTracker.class)
 public abstract class TickingTrackerMixin extends ChunkTracker {
+	
     @Shadow
     @Final
     @Mutable

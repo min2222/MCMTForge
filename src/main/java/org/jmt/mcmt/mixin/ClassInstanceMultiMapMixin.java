@@ -19,6 +19,7 @@ import net.minecraft.util.ClassInstanceMultiMap;
 
 @Mixin(ClassInstanceMultiMap.class)
 public abstract class ClassInstanceMultiMapMixin<T> extends AbstractCollection<T> {
+	
     @Shadow
     @Final
     @Mutable

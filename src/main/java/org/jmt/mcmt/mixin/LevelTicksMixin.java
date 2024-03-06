@@ -19,6 +19,7 @@ import net.minecraft.world.ticks.ScheduledTick;
 
 @Mixin(LevelTicks.class)
 public abstract class LevelTicksMixin<T> implements LevelTickAccess<T> {
+	
     @Shadow
     @Final
     @Mutable

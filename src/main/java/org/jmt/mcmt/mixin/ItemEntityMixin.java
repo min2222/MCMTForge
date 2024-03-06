@@ -11,6 +11,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 
 @Mixin(ItemEntity.class)
 public class ItemEntityMixin {
+	
     private static final ReentrantLock lock = new ReentrantLock();
 
     @Inject(method="mergeWithNeighbours()V",at=@At(value="HEAD"))
