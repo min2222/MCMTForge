@@ -29,6 +29,7 @@ import org.jmt.mcmt.serdes.pools.PostExecutePool;
 import net.minecraft.network.protocol.game.ClientboundBlockEventPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Player;
@@ -38,8 +39,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.levelgen.RandomSupport;
-import net.minecraft.world.level.levelgen.ThreadSafeLegacyRandomSource;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.ListenerList;
 import net.minecraftforge.eventbus.api.EventListenerHelper;
@@ -130,7 +129,7 @@ public class ASMHookTerminator {
     }
 
     public static void callTick(ServerLevel serverworld, BooleanSupplier hasTimeLeft, MinecraftServer server) {
-        serverworld.random = new ThreadSafeLegacyRandomSource(RandomSupport.generateUniqueSeed());
+        serverworld.random = RandomSource.createThreadSafe();
         if (GeneralConfig.disabled || GeneralConfig.disableWorld) {
             try {
                 serverworld.tick(hasTimeLeft);
@@ -248,7 +247,7 @@ public class ASMHookTerminator {
     }
 
     public static void callTickChunks(ServerLevel world, LevelChunk chunk, int k) {
-    	world.random = new ThreadSafeLegacyRandomSource(RandomSupport.generateUniqueSeed());
+    	world.random = RandomSource.createThreadSafe();
         if (GeneralConfig.disabled || GeneralConfig.disableEnvironment) {
             world.tickChunk(chunk, k);
             return;
@@ -285,7 +284,8 @@ public class ASMHookTerminator {
     }
 
     public static void callEntityTick(Consumer<Entity> tickConsumer, Entity entityIn, ServerLevel serverworld) {
-        serverworld.random = new ThreadSafeLegacyRandomSource(RandomSupport.generateUniqueSeed());
+        serverworld.random = RandomSource.createThreadSafe();
+        entityIn.random = RandomSource.createThreadSafe();
         if (GeneralConfig.disabled || GeneralConfig.disableEntity) {
         	tickConsumer.accept(entityIn);
             return;
@@ -331,7 +331,7 @@ public class ASMHookTerminator {
     }
 
     public static void callBlockEntityTick(TickingBlockEntity tte, Level world) {
-    	world.random = new ThreadSafeLegacyRandomSource(RandomSupport.generateUniqueSeed());
+    	world.random = RandomSource.createThreadSafe();
         if ((world instanceof ServerLevel) && tte instanceof LevelChunk.RebindableTickingBlockEntityWrapper && (((LevelChunk.RebindableTickingBlockEntityWrapper) tte).ticker instanceof LevelChunk.BoundTickingBlockEntity<?>)) {
             if (GeneralConfig.disabled || GeneralConfig.disableTileEntity) {
                 tte.tick();
