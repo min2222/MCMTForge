@@ -1,0 +1,16 @@
+build/
+out/
+.gradle/
+.idea/
+*.iml
+*.ipr
+*.iws
+classes/
+bin/
+eclipse/
+run/
+run-server/
+.settings/
+.classpath
+.project
+src/api/
