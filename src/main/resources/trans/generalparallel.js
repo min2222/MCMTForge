@@ -688,7 +688,6 @@ function initializeCoreMod() {
             				}
             			}
             		}
-
             		
             		var callMethod = asmapi.mapMethod("m_8793_");
             		var callClass = "net/minecraft/server/level/ServerLevel";
