@@ -48,6 +48,11 @@ public abstract class ServerLevelMixin implements WorldGenLevel {
     @Mutable
     Set<Mob> navigatingMobs = ConcurrentCollections.newHashSet();
     
+    @Shadow
+    @Final
+    @Mutable
+    private ObjectLinkedOpenHashSet<BlockEventData> blockEvents = null;
+    
 	ServerLevel thisWorld = (ServerLevel) (Object) this;
 
 	@Redirect(method = "<init>", at = @At(value = "NEW", target = "(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/storage/LevelStorageSource$LevelStorageAccess;Lcom/mojang/datafixers/DataFixer;Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplateManager;Ljava/util/concurrent/Executor;Lnet/minecraft/world/level/chunk/ChunkGenerator;IIZLnet/minecraft/server/level/progress/ChunkProgressListener;Lnet/minecraft/world/level/entity/ChunkStatusUpdateListener;Ljava/util/function/Supplier;)Lnet/minecraft/server/level/ServerChunkCache;"))
