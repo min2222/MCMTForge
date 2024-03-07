@@ -1,7 +1,10 @@
 package org.jmt.mcmt.asmdest;
 
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +39,12 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.ListenerList;
+import net.minecraftforge.eventbus.api.EventListenerHelper;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.IEventListener;
+import net.minecraftforge.fml.LogicalSide;
 
 @SuppressWarnings("deprecation")
 public class ASMHookTerminator {
@@ -152,6 +161,51 @@ public class ASMHookTerminator {
                 try {
                     currentWorlds.incrementAndGet();
                     serverworld.tick(hasTimeLeft);
+					if (GeneralConfig.disableWorldPostTick) {
+						synchronized (net.minecraftforge.event.ForgeEventFactory.class) {
+							net.minecraftforge.event.ForgeEventFactory.onPostLevelTick(serverworld,  hasTimeLeft);
+						}
+					} else {
+						TickEvent.LevelTickEvent event = new TickEvent.LevelTickEvent(LogicalSide.SERVER, TickEvent.Phase.END, serverworld, hasTimeLeft);
+						ListenerList ll = EventListenerHelper.getListenerList(TickEvent.LevelTickEvent.class);
+						//TODO find better way to locate listeners
+						IEventListener[] listeners = ll.getListeners(0);
+						//TODO Add some way to cache listeners because this is
+						//Janky and slow
+						Map<EventPriority, List<IEventListener>> prioritymap = new HashMap<EventPriority, List<IEventListener>>();
+						EventPriority current = EventPriority.HIGHEST;
+						prioritymap.computeIfAbsent(current, i->new ArrayList<>());
+						for (IEventListener iel : listeners) {
+							if (iel instanceof EventPriority) {
+								EventPriority newcurrent = (EventPriority) iel;
+								// Shouldn't be absent but if exists then drop
+								prioritymap.computeIfAbsent(newcurrent, i->new ArrayList<>());
+								//List<IEventListener> iell = prioritymap.computeIfAbsent(newcurrent, i->new ArrayList<>());
+								//iell.add(current); May break stuff so avoided;
+								current = newcurrent;
+							} else {
+								prioritymap.get(current).add(iel);
+							}
+						}
+						for (EventPriority ep : EventPriority.values()) {
+							List<IEventListener> iell = prioritymap.get(ep);
+							if (iell != null) {
+								ep.invoke(event);
+								for (IEventListener iel : iell) {
+									worldPhaser.register();
+									worldPool.execute(() -> {
+										try {
+											synchronized (iel) {
+												iel.invoke(event);
+											}
+										} finally {
+											worldPhaser.arriveAndDeregister();
+										}
+									});
+								}
+							}
+						}
+					}
                 } finally {
                     worldPhaser.arriveAndDeregister();
                     currentWorlds.decrementAndGet();
