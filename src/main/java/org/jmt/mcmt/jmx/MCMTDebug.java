@@ -26,7 +26,7 @@ public class MCMTDebug extends NotificationBroadcasterSupport implements MCMTDeb
     @Override
     public String[] getLoadedMods() {
         Thread.currentThread().setContextClassLoader(ccl);
-		return ModList.get().applyForEachModContainer(mc -> mc.getModId() + ":" + mc.getModInfo().getVersion().toString()).toArray(String[]::new);
+        return ModList.get().applyForEachModContainer(mc -> mc.getModId() + ":" + mc.getModInfo().getVersion().toString()).toArray(String[]::new);
     }
 
     @Override

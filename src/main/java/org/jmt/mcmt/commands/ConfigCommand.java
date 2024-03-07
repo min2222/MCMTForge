@@ -22,7 +22,7 @@ public class ConfigCommand {
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 		LiteralArgumentBuilder<CommandSourceStack> mcmtconfig = Commands.literal("mcmt");
 		mcmtconfig = mcmtconfig.then(registerConfig(Commands.literal("config")));
-		mcmtconfig = mcmtconfig.then(DebugCommands.registerDebug(Commands.literal("debug")));
+		mcmtconfig = mcmtconfig.then(DebugCommand.registerDebug(Commands.literal("debug")));
 		mcmtconfig = StatsCommand.registerStatus(mcmtconfig);
 		dispatcher.register(mcmtconfig);
 	}

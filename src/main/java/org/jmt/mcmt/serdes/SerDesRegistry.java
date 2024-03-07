@@ -200,7 +200,7 @@ public class SerDesRegistry {
                 isLocking = true;
             }
             // Apparently a string starts with check is faster than Class.getPackage; who knew (I didn't)
-            if (!isLocking && GeneralConfig.chunkLockModded && !tte.getClass().getName().startsWith("net.minecraft.world.level.block.entity.")) {
+            if (!isLocking && GeneralConfig.chunkLockModded && !tte.getClass().getName().startsWith("net.minecraft.block.entity.")) {
                 isLocking = true;
             }
             if (isLocking && GeneralConfig.teWhiteList.contains(tte.getClass())) {

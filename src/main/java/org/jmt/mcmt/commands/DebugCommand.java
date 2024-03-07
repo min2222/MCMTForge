@@ -44,7 +44,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraftforge.registries.ForgeRegistries;
 
-public class DebugCommands {
+public class DebugCommand {
 
 	public static LiteralArgumentBuilder<CommandSourceStack> registerDebug(
 			LiteralArgumentBuilder<CommandSourceStack> root) {
