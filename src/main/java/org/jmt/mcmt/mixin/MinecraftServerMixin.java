@@ -52,11 +52,6 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         ASMHookTerminator.callTick(serverWorld, shouldKeepTicking, (MinecraftServer) (Object) this);
     }
     
-    @Redirect(method = "reloadResources", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;isSameThread()Z"))
-    private boolean onServerExecutionThreadPatch(MinecraftServer minecraftServer) {
-        return ASMHookTerminator.serverExecutionThreadPatch(minecraftServer);
-    }
-    
     @Redirect(method = "prepareLevels", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerChunkCache;getTickingGenerated()I"))
     private int initialChunkCountBypass(ServerChunkCache instance) {
         if (DebugHookTerminator.isBypassLoadTarget())
