@@ -1,9 +1,5 @@
 package org.jmt.mcmt.mixin;
 
-import java.util.Map;
-import java.util.UUID;
-
-import org.jmt.mcmt.asmdest.ConcurrentCollections;
 import org.jmt.mcmt.paralelised.fastutil.Int2ObjectConcurrentHashMap;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,11 +21,11 @@ public abstract class EntityLookupMixin<T extends EntityAccess> {
     @Mutable
     private Int2ObjectMap<T> byId;
 
-    @Shadow
+    /*@Shadow
     @Final
     @Mutable
-    private Map<UUID, T> byUuid = ConcurrentCollections.newHashMap();
-
+    private Map<UUID, T> byUuid = ConcurrentCollections.newHashMap();*/
+    
     @Inject(method = "<init>",at = @At("TAIL"))
     private void replaceConVars(CallbackInfo ci) {
     	byId = new Int2ObjectConcurrentHashMap<>();
