@@ -93,34 +93,80 @@ function initializeCoreMod() {
             	return methodNode;
             }
     	},
-    	'PalettedContainerLock': {
+		'PalettedContainerReLock': {
     		'target': {
-                'type': 'METHOD',
-                'class': 'net.minecraft.world.level.chunk.PalettedContainer',
-                "methodName": "m_63084_",
-        		"methodDesc": "()V"
+                'type': 'CLASS',
+                'name': 'net.minecraft.world.level.chunk.PalettedContainer'
             },
-            "transformer": function(methodNode) {
-            	print("[JMTSUPERTRANS] PalettedContainerLock Transformer Called");
-            	
+            "transformer": function(classNode) {
             	var opcodes = Java.type('org.objectweb.asm.Opcodes');
             	var asmapi = Java.type('net.minecraftforge.coremod.api.ASMAPI');
             	var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
             	var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
-            	var JumpInsnNode = Java.type("org.objectweb.asm.tree.JumpInsnNode");
+				var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
+				var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
+				var JumpInsnNode = Java.type("org.objectweb.asm.tree.JumpInsnNode");
+				var LabelNode = Java.type("org.objectweb.asm.tree.LabelNode");
+				var MethodType = asmapi.MethodType;
+				
+				asmapi.log("INFO", "[JMTSUPERTRANS] PalettedContainerReLock Transformer Called");
             	
-            	var instructions = methodNode.instructions;
+				var methods = classNode.methods;
             	
-            	var target = asmapi.findFirstInstruction(methodNode, opcodes.IFNE);
+            	var targetMethodLock = asmapi.mapMethod("m_63084_");
+				var targetMethodFree = asmapi.mapMethod("m_63120_"); 
+            	var targetMethodDesc = "()V"; // Remember that these are non static so still eat a ref
+
+				for (var i in methods) {
+            		var method = methods[i];
+
+					if (method.name.equals(targetMethodLock) || method.name.equals(targetMethodFree)) {
+						//don't patch targets'
+						continue;
+					}
+					
+					var instructions = method.instructions;
+					
+					var currentIdx = 0;
+					var lockref = asmapi.findFirstMethodCallAfter(method, MethodType.VIRTUAL, classNode.name, 
+													targetMethodLock, targetMethodDesc, currentIdx);
+					
+					while (lockref != null) {
+						var skipTarget = new LabelNode();
+						var il = new InsnList();
+            			il.add(new VarInsnNode(opcodes.ALOAD, 0));
+						il.add(new InsnNode(opcodes.MONITORENTER));
+						il.add(new JumpInsnNode(opcodes.GOTO, skipTarget));
+						instructions.insertBefore(lockref, il);
+        				instructions.insert(lockref, skipTarget);
+						currentIdx = instructions.indexOf(lockref)+1;
+						lockref = asmapi.findFirstMethodCallAfter(method, MethodType.VIRTUAL, classNode.name, 
+													targetMethodLock, targetMethodDesc, currentIdx);
+					}
+					
+					currentIdx = 0;
+					var freeref = asmapi.findFirstMethodCallAfter(method, MethodType.VIRTUAL, classNode.name, 
+													targetMethodFree, targetMethodDesc, currentIdx);
+													
+					while (freeref != null) {
+						var skipTarget = new LabelNode();
+						var il = new InsnList();
+            			il.add(new VarInsnNode(opcodes.ALOAD, 0));
+						il.add(new InsnNode(opcodes.MONITOREXIT));
+						il.add(new JumpInsnNode(opcodes.GOTO, skipTarget));
+						instructions.insertBefore(freeref, il);
+        				instructions.insert(freeref, skipTarget);
+						currentIdx = instructions.indexOf(freeref)+1;
+						freeref = asmapi.findFirstMethodCallAfter(method, MethodType.VIRTUAL, classNode.name, 
+													targetMethodFree, targetMethodDesc, currentIdx);
+					}
+					
+
+				}
             	
-            	var il = new InsnList();
-            	il.add(new InsnNode(opcodes.POP));
-            	il.add(new JumpInsnNode(opcodes.GOTO, target.label));
-            	instructions.insertBefore(target, il);
+            	asmapi.log("INFO", "[JMTSUPERTRANS] PalettedContainerReLock Transformer Complete");
             	
-            	print("[JMTSUPERTRANS] PalettedContainerLock Transformer Complete");
-            	
-            	return methodNode
+            	return classNode;
             }
     	},
     	'WorldGetTE': {
