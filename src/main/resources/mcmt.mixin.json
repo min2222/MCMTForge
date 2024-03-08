@@ -4,35 +4,15 @@
 	"package": "org.jmt.mcmt.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"mixins": [
-		"ChunkAccessMixin",
-		"ChunkHolderMixin",
-		"ChunkMapMixin",
-		"ClassInstanceMultiMapMixin",
-		"CollectingNeighborUpdaterMixin",
-		"DistanceManagerMixin",
-		"DynamicGraphMinFixedPointMixin",
-		"EntityLookupMixin",
-		"EntitySectionStorageMixin",
-		"EntityTickListMixin",
-		"FastUtilsMixin",
-		"ItemEntityMixin",
-		"LegacyRandomSourceMixin",
 		"LevelMixin",
-		"LevelTicksMixin",
 		"MinecraftServerMixin",
-		"PathFinderMixin",
-		"SectionStorageMixin",
 		"ServerChunkCacheMixin",
-		"ServerLevelMixin",
-		"SyncAllMixin",
-		"TickingTrackerMixin",
-		"UtilMixin"
+		"ServerLevelMixin"
 	],
 	"client": [],
 	"server": [],
 	"injectors": {
 		"defaultRequire": 1
 	},
-	"refmap": "mcmt.refmap.json",
-	"plugin": "org.jmt.mcmt.mixin.SynchronisePlugin"
+	"refmap": "mcmt.refmap.json"
 }
