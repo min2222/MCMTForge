@@ -9,7 +9,12 @@
 		"ServerChunkCacheMixin",
 		"ServerLevelMixin",
 		"EntityLookupMixin",
-		"EntitySectionStorageMixin"
+		"EntitySectionStorageMixin",
+		"EntityTickListMixin",
+		"ChunkMapMixin",
+		"ChunkHolderMixin",
+		"ChunkAccessMixin",
+		"ItemEntityMixin"
 	],
 	"client": [],
 	"server": [],
