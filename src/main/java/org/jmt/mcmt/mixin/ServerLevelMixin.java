@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import org.jmt.mcmt.asmdest.ASMHookTerminator;
 import org.jmt.mcmt.paralelised.ParaServerChunkProvider;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -51,5 +52,10 @@ public abstract class ServerLevelMixin implements WorldGenLevel {
     @Redirect(method = "m_184063_", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;guardEntityTick(Ljava/util/function/Consumer;Lnet/minecraft/world/entity/Entity;)V"))
     private void overwriteEntityTicking(ServerLevel instance, Consumer<Entity> consumer, Entity entity) {
     	ASMHookTerminator.callEntityTick(consumer, entity, thisWorld);
+    }
+    
+    @Redirect(method = "sendBlockUpdated", at = @At(value = "FIELD", target = "Lnet/minecraft/server/level/ServerLevel;isUpdatingNavigations:Z", opcode = Opcodes.PUTFIELD))
+    private void skipSendBlockUpdatedCheck(ServerLevel instance, boolean value) {
+
     }
 }

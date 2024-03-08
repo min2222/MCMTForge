@@ -8,7 +8,8 @@
 		"MinecraftServerMixin",
 		"ServerChunkCacheMixin",
 		"ServerLevelMixin",
-		"EntityLookupMixin"
+		"EntityLookupMixin",
+		"EntitySectionStorageMixin"
 	],
 	"client": [],
 	"server": [],
