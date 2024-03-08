@@ -328,15 +328,17 @@ public class ASMHookTerminator {
 	public static void sendQueuedBlockEvents(Deque<BlockEventData> d, ServerLevel sw) {
 		sw.random = RandomSource.createThreadSafe();
 		Iterator<BlockEventData> bed = d.iterator();
-		while (bed.hasNext()) {
+		while(bed.hasNext()) {
 			BlockEventData blockeventdata = bed.next();
-			if (sw.doBlockEvent(blockeventdata)) {
-				sw.getServer().getPlayerList().broadcast((Player)null, (double)blockeventdata.pos().getX(), (double)blockeventdata.pos().getY(), (double)blockeventdata.pos().getZ(), 64.0D, sw.dimension(), new ClientboundBlockEventPacket(blockeventdata.pos(), blockeventdata.block(), blockeventdata.paramA(), blockeventdata.paramB()));
+			if (sw.shouldTickBlocksAt(blockeventdata.pos())) {
+				if (sw.doBlockEvent(blockeventdata)) {
+					sw.getServer().getPlayerList().broadcast((Player)null, (double)blockeventdata.pos().getX(), (double)blockeventdata.pos().getY(), (double)blockeventdata.pos().getZ(), 64.0D, sw.dimension(), new ClientboundBlockEventPacket(blockeventdata.pos(), blockeventdata.block(), blockeventdata.paramA(), blockeventdata.paramB()));
+				}
+				if (!isTicking.get()) {
+					LOGGER.fatal("Block updates outside of tick");
+				}
+				bed.remove();
 			}
-			if (!isTicking.get()) {
-				LOGGER.fatal("Block updates outside of tick");
-			}
-			bed.remove();
 		}
 	}
 

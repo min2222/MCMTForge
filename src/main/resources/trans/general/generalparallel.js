@@ -135,6 +135,58 @@ function initializeCoreMod() {
             },
             "transformer": synchronizeMethod("ServerWorldOnBlockStateChange")
     	},
+    	'POIManager_func_219149_a_': {
+            'target': {
+                'type': 'METHOD',
+                'class': 'net.minecraft.world.entity.ai.village.poi.PoiManager',
+                "methodName": "m_217884_",
+        		"methodDesc": "(Lnet/minecraft/world/level/ChunkPos;Ljava/lang/Integer;)Ljava/util/Optional"
+            },
+            "transformer": synchronizeMethod("POIManager_func_219149_a_")
+    	},
+    	'PlayerEntityRemoveQueueSync': {
+    		'target': {
+                'type': 'METHOD',
+                'class': 'net.minecraft.server.level.ServerPlayer',
+                'methodName': "<init>",
+                'methodDesc': "(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/server/level/ServerLevel;Lcom/mojang/authlib/GameProfile;Lnet/minecraft/world/entity/player/ProfilePublicKey;)V"
+            },
+            "transformer": function(methodNode) {
+            	print("[JMTSUPERTRANS] PlayerEntityRemoveQueueSync Transformer Called");
+            	
+            	var opcodes = Java.type('org.objectweb.asm.Opcodes');
+            	var asmapi = Java.type('net.minecraftforge.coremod.api.ASMAPI');
+            	var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
+            	var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
+            	var TypeInsnNode = Java.type("org.objectweb.asm.tree.TypeInsnNode");
+            	var MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
+            	var MethodType = asmapi.MethodType;
+            	
+            	var instructions = methodNode.instructions;
+            	            	
+            	var callMethod = "newLinkedList";
+        		var callClass = "com/google/common/collect/Lists";
+        		var callDesc = "()Ljava/util/LinkedList;";
+        		
+        		var callTarget = asmapi.findFirstMethodCallAfter(methodNode, MethodType.STATIC, 
+        				callClass, callMethod, callDesc, 0);
+        		
+        		var newClass = "org/jmt/mcmt/paralelised/ConcurrentDoublyLinkedList"
+        		
+        		var il = new InsnList();
+        		il.add(new InsnNode(opcodes.POP));
+            	il.add(new TypeInsnNode(opcodes.NEW, newClass));
+            	il.add(new InsnNode(opcodes.DUP));
+            	il.add(new MethodInsnNode(opcodes.INVOKESPECIAL, 
+            			newClass, "<init>", "()V", false));
+            	
+            	instructions.insert(callTarget, il);
+            	            	
+            	print("[JMTSUPERTRANS] PlayerEntityRemoveQueueSync Transformer Complete");
+            	
+            	return methodNode;
+            }
+    	},
 		'TemplateManagerHashMap': {
             'target': {
                 'type': 'METHOD',
