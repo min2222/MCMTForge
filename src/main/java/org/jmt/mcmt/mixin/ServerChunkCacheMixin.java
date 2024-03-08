@@ -17,10 +17,6 @@ import net.minecraft.world.level.chunk.LevelChunk;
 @Mixin(ServerChunkCache.class)
 public abstract class ServerChunkCacheMixin extends ChunkSource {
 	
-    @Shadow
-    @Final
-    ServerChunkCache.MainThreadExecutor mainThreadProcessor;
-    
 	@Shadow
 	@Final ServerLevel level;
 	
