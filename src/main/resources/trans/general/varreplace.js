@@ -235,7 +235,8 @@ function initializeCoreMod() {
             	
             	return classNode;
             }
-    	},*/
+    	},
+    	//entitylookup mixin
     	'ServerWorldEntitiesByIdFastUtkill': {
     		'target': {
                 'type': 'CLASS',
@@ -324,7 +325,7 @@ function initializeCoreMod() {
             	
             	return classNode;
             }
-    	},
+    	},*/
     	'LevelBasedGraph-UpdatesByLevel': {
             'target': {
                 'type': 'METHOD',
@@ -480,7 +481,7 @@ function initializeCoreMod() {
             	il.add(new InsnNode(opcodes.POP))
             	il.add(new TypeInsnNode(opcodes.NEW, "org/jmt/mcmt/paralelised/fastutil/ConcurrentLongLinkedOpenHashSet"))
             	il.add(new InsnNode(opcodes.DUP))
-            	il.add(new MethodInsnNode(opcodes.INVOKESPECIAL, 
+            	il.add(new MethodInsnNode(opcodes.INVOKESPECIAL,
             			"org/jmt/mcmt/paralelised/fastutil/ConcurrentLongLinkedOpenHashSet", "<init>",
             			"()V"))
             			

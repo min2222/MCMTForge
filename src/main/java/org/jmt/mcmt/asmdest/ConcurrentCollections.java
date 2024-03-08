@@ -11,12 +11,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class ConcurrentCollections {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    //private static final Logger LOGGER = LogManager.getLogger();
 
     public static <T> Set<T> newHashSet() {
         //LOGGER.info("Concurrent hash set created");
@@ -29,7 +26,7 @@ public class ConcurrentCollections {
     }
 
     public static <T> List<T> newLinkedList() {
-        LOGGER.info("Concurrent \"linked\" list created");
+        //LOGGER.info("Concurrent \"linked\" list created");
         return new CopyOnWriteArrayList<T>();
     }
 
@@ -38,7 +35,7 @@ public class ConcurrentCollections {
     }
 
     public static <T> Queue<T> newArrayDeque() {
-        LOGGER.info("Concurrent \"array\" deque created");
+        //LOGGER.info("Concurrent \"array\" deque created");
         return new ConcurrentLinkedDeque<T>();
     }
 
