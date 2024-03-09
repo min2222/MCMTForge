@@ -33,6 +33,7 @@ import org.jmt.mcmt.serdes.filter.ISerDesFilter;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -56,6 +57,7 @@ import net.minecraftforge.event.ForgeEventFactory;
  * @author jediminer543
  *
  */
+@SuppressWarnings("deprecation")
 public class ASMHookTerminator {
 
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -208,12 +210,18 @@ public class ASMHookTerminator {
 	}
 
 	public static void preTick(MinecraftServer server) {
+		server.levels.forEach((t, u) -> {
+			u.random = RandomSource.createThreadSafe();
+		});
 		isTicking.set(true);
 		mcServer = server;
 		StatsCommand.setServer(mcServer);
 	}
 
 	public static void callTick(ServerLevel serverworld, BooleanSupplier hasTimeLeft, MinecraftServer server) {
+		server.levels.forEach((t, u) -> {
+			u.random = RandomSource.createThreadSafe();
+		});
 		if (GeneralConfig.disabled || GeneralConfig.disableWorld) {
 			try {
 				serverworld.tick(hasTimeLeft);
@@ -226,7 +234,7 @@ public class ASMHookTerminator {
 		}
 
 		if (mcServer != server) {
-			LOGGER.warn("Multiple servers?");
+			//LOGGER.warn("Multiple servers?");
 			GeneralConfig.disabled = true;
 			serverworld.tick(hasTimeLeft);
 			ForgeEventFactory.onPostLevelTick(serverworld, hasTimeLeft);
@@ -255,6 +263,8 @@ public class ASMHookTerminator {
 	}
 
 	public static void callEntityTick(Consumer<Entity> tickConsumer, Entity entityIn, ServerLevel serverworld) {
+		serverworld.random = RandomSource.createThreadSafe();
+		entityIn.random = RandomSource.createThreadSafe();
 		if (GeneralConfig.disabled || GeneralConfig.disableEntity) {
 			tickConsumer.accept(entityIn);
 			return;
@@ -281,6 +291,7 @@ public class ASMHookTerminator {
 	}
 
 	public static void callTickChunks(ServerLevel world, LevelChunk chunk, int k) {
+		world.random = RandomSource.createThreadSafe();
 		if (GeneralConfig.disabled  || GeneralConfig.disableEnvironment) {
 			world.tickChunk(chunk, k);
 			return;
@@ -315,6 +326,7 @@ public class ASMHookTerminator {
 	}
 
 	public static void callBlockEntityTick(TickingBlockEntity tte, Level world) {
+		world.random = RandomSource.createThreadSafe();
 		if (GeneralConfig.disabled  || GeneralConfig.disableTileEntity || !(world instanceof ServerLevel)) {
 			tte.tick();
 			return;
@@ -342,8 +354,11 @@ public class ASMHookTerminator {
 	}
 
 	public static void postTick(MinecraftServer server) {
+		server.levels.forEach((t, u) -> {
+			u.random = RandomSource.createThreadSafe();
+		});
 		if (mcServer != server) {
-			LOGGER.warn("Multiple servers?");
+			//LOGGER.warn("Multiple servers?");
 			return;
 		} else {
 			awaitCompletion(worldExecutionStack); // this should be empty, but run it just in case
