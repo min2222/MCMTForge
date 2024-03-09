@@ -83,7 +83,7 @@ function initializeCoreMod() {
             	return methodNode;
             }
     	},
-    	/*'SCPGetChunkNowPatch': {
+    	'SCPGetChunkNowPatch': {
             'target': {
                 'type': 'METHOD',
                 'class': 'net.minecraft.server.level.ServerChunkCache',
@@ -116,6 +116,6 @@ function initializeCoreMod() {
             	
             	return methodNode;
             }
-    	},*/
+    	},
     }
 }
