@@ -17,7 +17,8 @@
 		"ChunkMapMixin",
 		"ChunkHolderMixin",
 		"ChunkAccessMixin",
-		"ItemEntityMixin"
+		"ItemEntityMixin",
+		"CollectingNeighborUpdaterMixin"
 	],
 	"client": [],
 	"server": [],
