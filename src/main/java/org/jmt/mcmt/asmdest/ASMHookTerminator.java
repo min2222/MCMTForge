@@ -2,6 +2,7 @@ package org.jmt.mcmt.asmdest;
 
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +24,7 @@ import org.jmt.mcmt.serdes.SerDesRegistry;
 import org.jmt.mcmt.serdes.filter.ISerDesFilter;
 import org.jmt.mcmt.serdes.pools.PostExecutePool;
 
+import net.minecraft.Util;
 import net.minecraft.network.protocol.game.ClientboundBlockEventPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -68,8 +70,12 @@ public class ASMHookTerminator {
             fjwt.setContextClassLoader(cl);
             return fjwt;
         };
-        worldPool = new ForkJoinPool(Math.min(3, Math.max(parallelism / 2, 1)), worldThreadFactory, null, true);
-        tickPool = new ForkJoinPool(parallelism, tickThreadFactory, null, true);
+        worldPool = new ForkJoinPool(Math.min(3, Math.max(parallelism / 2, 1)), worldThreadFactory, ASMHookTerminator::onThreadException, true);
+        tickPool = new ForkJoinPool(parallelism, tickThreadFactory, ASMHookTerminator::onThreadException, true);
+    }
+    
+    public static void onThreadException(Thread p_137496_, Throwable p_137497_) {
+    	p_137497_.getCause().printStackTrace(System.out);
     }
 
     /**
