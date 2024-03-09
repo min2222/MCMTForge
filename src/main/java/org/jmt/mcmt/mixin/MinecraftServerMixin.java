@@ -33,7 +33,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
 
 	@Inject(method = "tickChildren", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V"))
     private void preTick(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
-    	ASMHookTerminator.preTick(this.levels.size(), (MinecraftServer) (Object) this);
+    	ASMHookTerminator.preTick((MinecraftServer) (Object) this);
     }
 
     @Inject(method = "tickChildren", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;popPush(Ljava/lang/String;)V", ordinal = 1))

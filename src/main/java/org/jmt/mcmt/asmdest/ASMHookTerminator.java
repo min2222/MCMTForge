@@ -1,14 +1,21 @@
 package org.jmt.mcmt.asmdest;
 
-import java.util.Deque;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.StringJoiner;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
 import java.util.concurrent.ForkJoinWorkerThread;
-import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
@@ -17,364 +24,364 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jmt.mcmt.MCMT;
+import org.jmt.mcmt.commands.StatsCommand;
 import org.jmt.mcmt.config.GeneralConfig;
+import org.jmt.mcmt.paralelised.GatedLock;
 import org.jmt.mcmt.serdes.SerDesHookTypes;
 import org.jmt.mcmt.serdes.SerDesRegistry;
 import org.jmt.mcmt.serdes.filter.ISerDesFilter;
-import org.jmt.mcmt.serdes.pools.PostExecutePool;
 
-import net.minecraft.network.protocol.game.ClientboundBlockEventPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.FallingBlockEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.BlockEventData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.event.ForgeEventFactory;
 
-@SuppressWarnings("deprecation")
+/**
+ * This is where all current ASM hooks are terminated
+ * 
+ * So DON'T rename this file (Or there will be a lot of other work todo)
+ * 
+ * Fun point: So because this is hooking into a lot of the stuff, be careful what you reference here
+ * I attempted to reference a function on {@link GeneralConfig} and it got VERY angry at me with a "class refuses to load" error
+ * So remember that if you start getting class loading errors
+ * 
+ * 
+ * TODO: Add more docs
+ * 
+ * @author jediminer543
+ *
+ */
 public class ASMHookTerminator {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger();
 
-    static Phaser worldPhaser;
+	//	static Phaser phaser;
+	public static ConcurrentHashMap<String, Runnable> worldExecutionStack = new ConcurrentHashMap<>();
+	public static ConcurrentHashMap<String, Runnable> entityExecutionStack = new ConcurrentHashMap<>();
+	
+	public static Set<String> tracerStack = null;
+	
+	private static GatedLock stackLock = new GatedLock();
+	public static ExecutorService exec;
+	static MinecraftServer mcServer;
+	static AtomicBoolean isTicking = new AtomicBoolean();
+	static AtomicInteger threadID = new AtomicInteger();
 
-    static ConcurrentHashMap<ServerLevel, Phaser> sharedPhasers = new ConcurrentHashMap<>();
-    static ExecutorService worldPool;
-    static ExecutorService tickPool;
-    static MinecraftServer mcs;
-    static AtomicBoolean isTicking = new AtomicBoolean();
+	// Statistics
+	public static AtomicInteger currentWorlds = new AtomicInteger();
+	public static AtomicInteger currentEnts = new AtomicInteger();
+	public static AtomicInteger currentTEs = new AtomicInteger();
+	public static AtomicInteger currentEnvs = new AtomicInteger();
 
-    public static void setupThreadPool(int parallelism) {
-        AtomicInteger worldPoolThreadID = new AtomicInteger();
-        AtomicInteger tickPoolThreadID = new AtomicInteger();
-        final ClassLoader cl = MCMT.class.getClassLoader();
-        ForkJoinPool.ForkJoinWorkerThreadFactory worldThreadFactory = p -> {
-            ForkJoinWorkerThread fjwt = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(p);
-            fjwt.setName("MCMT-World-Pool-Thread-" + worldPoolThreadID.getAndIncrement());
-            regThread("MCMT-World", fjwt);
-            fjwt.setContextClassLoader(cl);
-            return fjwt;
-        };
-        ForkJoinPool.ForkJoinWorkerThreadFactory tickThreadFactory = p -> {
-            ForkJoinWorkerThread fjwt = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(p);
-            fjwt.setName("MCMT-Tick-Pool-Thread-" + tickPoolThreadID.getAndIncrement());
-            regThread("MCMT-Tick", fjwt);
-            fjwt.setContextClassLoader(cl);
-            return fjwt;
-        };
-        worldPool = new ForkJoinPool(Math.min(3, Math.max(parallelism / 2, 1)), worldThreadFactory, ASMHookTerminator::onThreadException, true);
-        tickPool = new ForkJoinPool(parallelism, tickThreadFactory, ASMHookTerminator::onThreadException, true);
-    }
-    
-    public static void onThreadException(Thread p_137496_, Throwable p_137497_) {
-    	p_137497_.getCause().printStackTrace(System.out);
-    }
+	public static void setupThreadPool(int parallelism) {
+		threadID = new AtomicInteger();
+		final ClassLoader cl = MCMT.class.getClassLoader();
+		ForkJoinWorkerThreadFactory fjpf = p -> {
+			ForkJoinWorkerThread fjwt = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(p);
+			fjwt.setName("MCMT-Pool-Thread-"+threadID.getAndIncrement());
+			regThread("MCMT", fjwt);
+			fjwt.setContextClassLoader(cl);
+			return fjwt;
+		};
 
-    /**
-     * Creates and sets up the thread pool
-     */
-    static {
-        // Must be static here due to class loading shenanagins
-        // setupThreadPool(4);
-    }
+		exec = new ForkJoinPool(
+				parallelism,
+				fjpf,	
+				null, false);
+	}
 
-    static Map<String, Set<Thread>> mcThreadTracker = new ConcurrentHashMap<String, Set<Thread>>();
+	/**
+	 * Creates and sets up the thread pool
+	 */
+	static {
+		// Must be static here due to class loading shenanagins
+		setupThreadPool(4);
+	}
 
-    // Statistics
-    public static AtomicInteger currentWorlds = new AtomicInteger();
-    public static AtomicInteger currentEnts = new AtomicInteger();
-    public static AtomicInteger currentTEs = new AtomicInteger();
-    public static AtomicInteger currentEnvs = new AtomicInteger();
+	static Map<String, Set<Thread>> mcThreadTracker = new ConcurrentHashMap<String, Set<Thread>>();
 
-    //Operation logging
-    public static Set<String> currentTasks = ConcurrentHashMap.newKeySet();
+	public static void regThread(String poolName, Thread thread) {
+		mcThreadTracker.computeIfAbsent(poolName, s -> ConcurrentHashMap.newKeySet()).add(thread);
+	}
 
-    public static void regThread(String poolName, Thread thread) {
-        mcThreadTracker.computeIfAbsent(poolName, s -> ConcurrentHashMap.newKeySet()).add(thread);
-    }
+	public static boolean isThreadPooled(String poolName, Thread t) {
+		return mcThreadTracker.containsKey(poolName) && mcThreadTracker.get(poolName).contains(t);
+	}
 
-    public static boolean isThreadPooled(String poolName, Thread t) {
-        return mcThreadTracker.containsKey(poolName) && mcThreadTracker.get(poolName).contains(t);
-    }
+	public static boolean serverExecutionThreadPatch(MinecraftServer ms) {
+		return isThreadPooled("MCMT", Thread.currentThread());
+	}
 
-    public static boolean serverExecutionThreadPatch(MinecraftServer ms) {
-        return isThreadPooled("MCMT-World", Thread.currentThread()) || isThreadPooled("MCMT-Tick", Thread.currentThread());
-    }
+	// Add a Runnable to the execution stack
+	private static void execute(String taskName, Runnable task, ConcurrentHashMap<String, Runnable> stack) {
+		// ensure there is no accidental key collision
+		while (stack.containsKey(taskName)) taskName = taskName + "+";
+		String finalTaskName = taskName;
+		// add a CompletableFuture to the execution stack that runs the given task
+		stack.put(finalTaskName, () -> {
+			task.run();
+			stack.remove(finalTaskName);
+		});
+	}
 
-    static long tickStart = 0;
+	private static void awaitCompletion(ConcurrentHashMap<String, Runnable> waitOn) {
+		if (waitOn.size() == 0) return; // avoid hefty operations if we don't need them
+		// don't re-execute if code is already running
+		if (stackLock.isLocked(waitOn)) {
+			stackLock.waitForUnlock(waitOn);
+			return;
+		}
+		stackLock.lockOn(waitOn);
 
-    public static void preTick(int size, MinecraftServer server) {
-    	server.levels.forEach((t, u) -> {
-    		u.random = RandomSource.createThreadSafe();
-    	});
-        if (!GeneralConfig.disabled && !GeneralConfig.disableWorld) {
-            if (worldPhaser != null) {
-                //LOGGER.warn("Multiple servers?");
-                return;
-            } else {
-                tickStart = System.nanoTime();
-                isTicking.set(true);
-                worldPhaser = new Phaser(size + 1);
-                mcs = server;
-            }
-        }
-    }
+		if (GeneralConfig.opsTracing)
+			tracerStack = new HashSet<>(waitOn.keySet());
 
-    public static void callTick(ServerLevel serverworld, BooleanSupplier hasTimeLeft, MinecraftServer server) {
-    	server.levels.forEach((t, u) -> {
-    		u.random = RandomSource.createThreadSafe();
-    	});
-        if (GeneralConfig.disabled || GeneralConfig.disableWorld) {
-            try {
-                serverworld.tick(hasTimeLeft);
-            } catch (Exception e) {
-                throw e;
-            }
-            return;
-        }
-        if (mcs != server) {
-            //LOGGER.warn("Multiple servers?");
-            GeneralConfig.disabled = true;
-            serverworld.tick(hasTimeLeft);
-            return;
-        } else {
-            String taskName = null;
-            if (GeneralConfig.opsTracing) {
-                taskName = "WorldTick: " + serverworld.toString() + "@" + serverworld.hashCode();
-                currentTasks.add(taskName);
-            }
-            String finalTaskName = taskName;
-            worldPool.execute(() -> {
-                try {
-                    currentWorlds.incrementAndGet();
-                    serverworld.tick(hasTimeLeft);
-                } finally {
-                    worldPhaser.arriveAndDeregister();
-                    currentWorlds.decrementAndGet();
-                    if (GeneralConfig.opsTracing) currentTasks.remove(finalTaskName);
-                }
-            });
-        }
-    }
-
-    public static long[] lastTickTime = new long[32];
-    public static int lastTickTimePos = 0;
-    public static int lastTickTimeFill = 0;
-
-    public static void postTick(MinecraftServer server) {
-    	server.levels.forEach((t, u) -> {
-    		u.random = RandomSource.createThreadSafe();
-    	});
-        if (!GeneralConfig.disabled && !GeneralConfig.disableWorld) {
-            if (mcs != server) {
-                //LOGGER.warn("Multiple servers?");
-                return;
-            } else {
-                worldPhaser.arriveAndAwaitAdvance();
-                isTicking.set(false);
-                worldPhaser = null;
-                //PostExecute logic
-                Deque<Runnable> queue = PostExecutePool.POOL.getQueue();
-                Iterator<Runnable> qi = queue.iterator();
-                while (qi.hasNext()) {
-                    Runnable r = qi.next();
-                    r.run();
-                    qi.remove();
-                }
-                lastTickTime[lastTickTimePos] = System.nanoTime() - tickStart;
-                lastTickTimePos = (lastTickTimePos + 1) % lastTickTime.length;
-                lastTickTimeFill = Math.min(lastTickTimeFill + 1, lastTickTime.length - 1);
-            }
-        }
-    }
-
-    public static void preChunkTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
-        Phaser phaser; // Keep a party throughout 3 ticking phases
-        if (!GeneralConfig.disabled && !GeneralConfig.disableEnvironment) {
-            phaser = new Phaser(2);
-        } else {
-            phaser = new Phaser(1);
-        }
-        sharedPhasers.put(world, phaser);
-    }
-
-    public static void callTickChunks(ServerLevel world, LevelChunk chunk, int k) {
-		world.random = RandomSource.createThreadSafe();
-        if (GeneralConfig.disabled || GeneralConfig.disableEnvironment) {
-            world.tickChunk(chunk, k);
-            return;
-        }
-        String taskName = null;
-        if (GeneralConfig.opsTracing) {
-            taskName = "EnvTick: " + chunk.toString() + "@" + chunk.hashCode();
-            currentTasks.add(taskName);
-        }
-        String finalTaskName = taskName;
-        sharedPhasers.get(world).register();
-        tickPool.execute(() -> {
-            try {
-                currentEnvs.incrementAndGet();
-                world.tickChunk(chunk, k);
-            } finally {
-                if (GeneralConfig.opsTracing) currentTasks.remove(finalTaskName);
-                sharedPhasers.get(world).arriveAndDeregister();
-                currentEnvs.decrementAndGet();
-            }
-        });
-    }
-
-    public static void postChunkTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
-        if (!GeneralConfig.disabled && !GeneralConfig.disableEnvironment) {
-            var phaser = sharedPhasers.get(world);
-            phaser.arriveAndDeregister();
-            phaser.arriveAndAwaitAdvance();
-        }
-    }
-
-    public static void preEntityTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
-        if (!GeneralConfig.disabled && !GeneralConfig.disableEntity) sharedPhasers.get(world).register();
-    }
-
-    public static void callEntityTick(Consumer<Entity> tickConsumer, Entity entityIn, ServerLevel serverworld) {
-    	serverworld.random = RandomSource.createThreadSafe();
-    	entityIn.random = RandomSource.createThreadSafe();
-        if (GeneralConfig.disabled || GeneralConfig.disableEntity) {
-            tickConsumer.accept(entityIn);
-            return;
-        }
-        if (entityIn instanceof Player || entityIn instanceof FallingBlockEntity) {
-            tickConsumer.accept(entityIn);
-            return;
-        }
-        String taskName = null;
-        if (GeneralConfig.opsTracing) {
-            taskName = "EntityTick: " + /*entityIn.toString() + KG: Wayyy too slow. Maybe for debug but needs to be done via flag in that circumstance */ "@" + entityIn.hashCode();
-            currentTasks.add(taskName);
-        }
-        String finalTaskName = taskName;
-        sharedPhasers.get(serverworld).register();
-        tickPool.execute(() -> {
-            try {
-                final ISerDesFilter filter = SerDesRegistry.getFilter(SerDesHookTypes.EntityTick, entityIn.getClass());
-                currentEnts.incrementAndGet();
-                if (filter != null) {
-                    filter.serialise(() -> tickConsumer.accept(entityIn), entityIn, entityIn.blockPosition(), serverworld, SerDesHookTypes.EntityTick);
-                } else {
-                    tickConsumer.accept(entityIn);
-                }
-            } finally {
-                if (GeneralConfig.opsTracing) currentTasks.remove(finalTaskName);
-                sharedPhasers.get(serverworld).arriveAndDeregister();
-                currentEnts.decrementAndGet();
-            }
-        });
-    }
-
-    public static void postEntityTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
-        if (!GeneralConfig.disabled && !GeneralConfig.disableEntity) {
-            var phaser = sharedPhasers.get(world);
-            phaser.arriveAndDeregister();
-            phaser.arriveAndAwaitAdvance();
-        }
-    }
-
-    public static void preBlockEntityTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
-        if (!GeneralConfig.disabled && !GeneralConfig.disableTileEntity) sharedPhasers.get(world).register();
-    }
-
-    public static void callBlockEntityTick(TickingBlockEntity tte, Level world) {
-		world.random = RandomSource.createThreadSafe();
-        if ((world instanceof ServerLevel) && tte instanceof LevelChunk.RebindableTickingBlockEntityWrapper && (((LevelChunk.RebindableTickingBlockEntityWrapper) tte).ticker instanceof LevelChunk.BoundTickingBlockEntity<?>)) {
-            if (GeneralConfig.disabled || GeneralConfig.disableTileEntity) {
-                tte.tick();
-                return;
-            }
-            if (((LevelChunk.BoundTickingBlockEntity<?>) ((LevelChunk.RebindableTickingBlockEntityWrapper) tte).ticker).blockEntity instanceof PistonMovingBlockEntity) {
-                tte.tick();
-                return;
-            }
-            String taskName = null;
-            if (GeneralConfig.opsTracing) {
-                taskName = "TETick: " + tte.toString() + "@" + tte.hashCode();
-                currentTasks.add(taskName);
-            }
-            String finalTaskName = taskName;
-            sharedPhasers.get(world).register();
-            tickPool.execute(() -> {
-                try {
-                    final ISerDesFilter filter = SerDesRegistry.getFilter(SerDesHookTypes.TETick, ((LevelChunk.RebindableTickingBlockEntityWrapper) tte).ticker.getClass());
-                    currentTEs.incrementAndGet();
-                    if (filter != null) filter.serialise(tte::tick, tte, tte.getPos(), world, SerDesHookTypes.TETick);
-                    else tte.tick();
-                } catch (Exception e) {
-                    System.err.println("Exception ticking TE at " + tte.getPos());
-                    e.printStackTrace();
-                } finally {
-                    if (GeneralConfig.opsTracing) currentTasks.remove(finalTaskName);
-                    sharedPhasers.get(world).arriveAndDeregister();
-                    currentTEs.decrementAndGet();
-                }
-            });
-        } else tte.tick();
-    }
-
-    //not used
-	public static void sendQueuedBlockEvents(Deque<BlockEventData> d, ServerLevel sw) {
-		sw.random = RandomSource.createThreadSafe();
-		Iterator<BlockEventData> bed = d.iterator();
-		while(bed.hasNext()) {
-			BlockEventData blockeventdata = bed.next();
-			if (sw.shouldTickBlocksAt(blockeventdata.pos())) {
-				if (sw.doBlockEvent(blockeventdata)) {
-					sw.getServer().getPlayerList().broadcast((Player)null, (double)blockeventdata.pos().getX(), (double)blockeventdata.pos().getY(), (double)blockeventdata.pos().getZ(), 64.0D, sw.dimension(), new ClientboundBlockEventPacket(blockeventdata.pos(), blockeventdata.block(), blockeventdata.paramA(), blockeventdata.paramB()));
-				}
-				if (!isTicking.get()) {
-					LOGGER.fatal("Block updates outside of tick");
-				}
-				bed.remove();
+		// loop
+		while (!waitOn.isEmpty()) {
+			// execute every queued tick
+			List<CompletableFuture<Void>> allTasks = new ArrayList<>(waitOn.size());
+			for (Entry<String, Runnable> x : waitOn.entrySet()) {
+				allTasks.add(CompletableFuture.runAsync(x.getValue(), exec));
 			}
+			// convert all outstanding ticks to one CompletableFuture to wait on
+			CompletableFuture<Void> tickSum = CompletableFuture.allOf(allTasks.toArray(new CompletableFuture[allTasks.size()]));
+			try {
+				// wait on all executing ticks for up to 1 second (20 ticks)
+				tickSum.get(1, TimeUnit.SECONDS);
+			} catch (TimeoutException e) {
+				LOGGER.error("This tick has taken longer than 1 second, investigating...");
+				LOGGER.error("Tick status: " + (tickSum.isDone() ? "done" : "not done"));
+				LOGGER.error("Initial queue size: " + allTasks.size());
+				
+				if (GeneralConfig.opsTracing) {
+					// get all ticks still in queue that were also in the starting queue
+					tracerStack.retainAll(waitOn.keySet());
+					
+					LOGGER.error("Current stuck ticks in queue:");
+					StringJoiner sj = new StringJoiner(", ", "[ ", " ]");
+					for (String taskName : tracerStack) sj.add(taskName);
+					LOGGER.error(sj.toString());
+					LOGGER.error("=====");
+				}
+				
+				LOGGER.error("Current queue:");
+				StringJoiner sj = new StringJoiner(", ", "[ ", " ]");
+				for (String taskName : waitOn.keySet()) sj.add(taskName);
+				LOGGER.error(sj.toString());
+
+				if (GeneralConfig.continueAfterStuckTick) {
+					LOGGER.fatal("CONTINUING AFTER STUCK TICK! I REALLY hope you have backups...");
+					tickSum.cancel(true); // cancel combined CompletableFuture
+				} else {
+					LOGGER.error("Continuing to wait for tick to complete... (don't hold your breath)");
+					try {
+						tickSum.get(); // wait for this tick to complete (but if we're here, it probably won't)
+						for (CompletableFuture<Void> i : allTasks) i.get();
+					} catch (InterruptedException | ExecutionException e1) {
+						LOGGER.fatal("Failed to wait for tick: ", e1);
+					} 
+				}
+			} catch (ExecutionException | InterruptedException e) {
+				LOGGER.fatal("Tick execution failed: ", e);
+				tickSum.cancel(true);
+			}
+
+			// debug data for how long the tick took
+			//			if (GeneralConfig.opsTracing)
+			//				LOGGER.info("This tick took " + Instant.now().minusMillis(before.toEpochMilli()).toEpochMilli() + " ms.");
+		}
+
+		if (waitOn.size() > 0) {
+			LOGGER.fatal("Execution stack was not empty before continuing to next tick! " + waitOn.size());
+
+			StringJoiner sj = new StringJoiner(", ", "[ ", " ]");
+			for (String taskName : waitOn.keySet()) sj.add(taskName);
+			LOGGER.fatal(sj.toString());
+		}
+
+		stackLock.unlock(waitOn);
+	}
+
+	public static void preTick(MinecraftServer server) {
+		isTicking.set(true);
+		mcServer = server;
+		StatsCommand.setServer(mcServer);
+	}
+
+	public static void callTick(ServerLevel serverworld, BooleanSupplier hasTimeLeft, MinecraftServer server) {
+		if (GeneralConfig.disabled || GeneralConfig.disableWorld) {
+			try {
+				serverworld.tick(hasTimeLeft);
+			} catch (Exception e) {
+				throw e;
+			} finally {
+				ForgeEventFactory.onPostLevelTick(serverworld, hasTimeLeft);
+			}
+			return;
+		}
+
+		if (mcServer != server) {
+			LOGGER.warn("Multiple servers?");
+			GeneralConfig.disabled = true;
+			serverworld.tick(hasTimeLeft);
+			ForgeEventFactory.onPostLevelTick(serverworld, hasTimeLeft);
+			return;
+		} else {
+			String taskName =  "WorldTick: " + serverworld.toString() + "@" +
+					// append world's dimension name to world tick task
+					serverworld.dimension().location().toString();
+
+			execute(taskName, () -> {
+				try {
+					currentWorlds.incrementAndGet();
+					serverworld.tick(hasTimeLeft);
+					if (!GeneralConfig.disableWorldPostTick) {
+						// execute world post-tick asynchronously
+						execute(taskName + "|PostTick", () -> {
+							ForgeEventFactory.onPostLevelTick(serverworld, hasTimeLeft);
+						}, worldExecutionStack);
+					} else {
+						ForgeEventFactory.onPostLevelTick(serverworld, hasTimeLeft);
+					}
+				} finally {
+					currentWorlds.decrementAndGet();
+				}
+			}, worldExecutionStack);
 		}
 	}
 
-    public static boolean filterTE(BlockEntity tte) {
-        boolean isLocking = false;
-        if (GeneralConfig.teBlackList.contains(tte.getClass())) {
-            isLocking = true;
-        }
-        // Apparently a string starts with check is faster than Class.getPackage; who knew (I didn't)
-        if (!isLocking && GeneralConfig.chunkLockModded && !tte.getClass().getName().startsWith("net.minecraft.world.level.block.entity.")) {
-            isLocking = true;
-        }
-        if (isLocking && GeneralConfig.teWhiteList.contains(tte.getClass())) {
-            isLocking = false;
-        }
-        if (tte instanceof PistonMovingBlockEntity) {
-            isLocking = true;
-        }
-        return isLocking;
-    }
+	public static void callEntityTick(Consumer<Entity> tickConsumer, Entity entityIn, ServerLevel serverworld) {
+		if (GeneralConfig.disabled || GeneralConfig.disableEntity) {
+			tickConsumer.accept(entityIn);
+			return;
+		}
+		String taskName = "EntityTick: " + entityIn.toString() + "@" + entityIn.hashCode();
+		Runnable r = () -> {
+			try {
+				currentEnts.incrementAndGet();
+				awaitCompletion(worldExecutionStack); // force world ticks to complete first
+				tickConsumer.accept(entityIn);
+			} finally {
+				currentEnts.decrementAndGet();
+			}
+		};
 
-    public static void postBlockEntityTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
-        if (!GeneralConfig.disabled && !GeneralConfig.disableTileEntity) {
-            var phaser = sharedPhasers.get(world);
-            phaser.arriveAndDeregister();
-            phaser.arriveAndAwaitAdvance();
-        }
-    }
+		final ISerDesFilter filter = SerDesRegistry.getFilter(SerDesHookTypes.EntityTick, entityIn.getClass());
+		if (filter != null) {
+			filter.serialise(() -> tickConsumer.accept(entityIn), entityIn, entityIn.blockPosition(), serverworld, task -> {
+				execute(taskName, r, entityExecutionStack);
+			}, SerDesHookTypes.EntityTick);
+		} else {
+			execute(taskName, r, entityExecutionStack);
+		}
+	}
 
-    public static boolean shouldThreadChunks() {
-        return !GeneralConfig.disableMultiChunk;
-    }
+	public static void callTickChunks(ServerLevel world, LevelChunk chunk, int k) {
+		if (GeneralConfig.disabled  || GeneralConfig.disableEnvironment) {
+			world.tickChunk(chunk, k);
+			return;
+		}
+		String taskName = "EnvTick: " + chunk.toString() + "@" + chunk.hashCode();
+		execute(taskName, () -> {
+			try {
+				currentEnvs.incrementAndGet();
+				world.tickChunk(chunk, k);
+			} finally {
+				currentEnvs.decrementAndGet();
+			}
+		}, worldExecutionStack);
+	}
+
+	public static boolean filterTickableEntity(BlockEntity tte) {
+		boolean isLocking = false;
+		if (GeneralConfig.teBlackList.contains(tte.getClass())) {
+			isLocking = true;
+		}
+		// Apparently a string starts with check is faster than Class.getPackage; who knew (I didn't)
+		if (!isLocking && GeneralConfig.chunkLockModded && !tte.getClass().getName().startsWith("net.minecraft.world.level.block.entity.")) {
+			isLocking = true;
+		}
+		if (isLocking && GeneralConfig.teWhiteList.contains(tte.getClass())) {
+			isLocking = false;
+		}
+		if (tte instanceof PistonMovingBlockEntity) {
+			isLocking = true;
+		}
+		return isLocking;
+	}
+
+	public static void callBlockEntityTick(TickingBlockEntity tte, Level world) {
+		if (GeneralConfig.disabled  || GeneralConfig.disableTileEntity || !(world instanceof ServerLevel)) {
+			tte.tick();
+			return;
+		}
+		String taskName = "TETick: " + tte.toString()  + "@" + tte.hashCode();
+		final ISerDesFilter filter = SerDesRegistry.getFilter(SerDesHookTypes.TETick, tte.getClass());
+		if (filter != null) {
+			filter.serialise(tte::tick, tte, ((BlockEntity)tte).getBlockPos(), world, (task) -> {
+				execute(taskName, () -> {
+					try {
+						currentTEs.incrementAndGet();
+						awaitCompletion(worldExecutionStack); // force world ticks to complete first
+						task.run();
+					} finally {
+						currentTEs.decrementAndGet();
+					}
+				}, entityExecutionStack);
+			}, SerDesHookTypes.TETick);
+		} else {
+			execute(taskName, () -> {
+				awaitCompletion(worldExecutionStack); // force world ticks to complete first
+				tte.tick();
+			}, entityExecutionStack);
+		}
+	}
+
+	public static void postTick(MinecraftServer server) {
+		if (mcServer != server) {
+			LOGGER.warn("Multiple servers?");
+			return;
+		} else {
+			awaitCompletion(worldExecutionStack); // this should be empty, but run it just in case
+			awaitCompletion(entityExecutionStack);
+		}
+	}
+
+	public static String populateCrashReport() {
+		StringBuilder confInfo = new StringBuilder();
+		confInfo.append("\n");
+		confInfo.append("\t\t"); confInfo.append("Config Info:"); confInfo.append("\n");
+		confInfo.append("\t\t"); confInfo.append("\t- Disabled: "); 
+		confInfo.append(GeneralConfig.disabled); confInfo.append("\n");
+		confInfo.append("\t\t"); confInfo.append("\t- World Disabled: "); 
+		confInfo.append(GeneralConfig.disableWorld); 
+		confInfo.append("(onPostTick Disabled: "); confInfo.append(GeneralConfig.disableWorldPostTick); confInfo.append(")\n");
+		confInfo.append("\t\t"); confInfo.append("\t- Entity Disabled: "); 
+		confInfo.append(GeneralConfig.disableEntity); confInfo.append("\n");
+		confInfo.append("\t\t"); confInfo.append("\t- Env Disabled: "); 
+		confInfo.append(GeneralConfig.disableEnvironment); confInfo.append("\n");
+		confInfo.append("\t\t"); confInfo.append("\t- TE Disabled: "); 
+		confInfo.append(GeneralConfig.disableTileEntity); confInfo.append("\n");
+		confInfo.append("\t\t"); confInfo.append("\t- SCP Disabled: "); 
+		confInfo.append(GeneralConfig.disableChunkProvider); confInfo.append("\n");
+		//TODO expand on TE settings
+		if (GeneralConfig.opsTracing) {
+			confInfo.append("\t\t"); confInfo.append("-- Running Operations Begin -- "); confInfo.append("\n");
+			for (String s : entityExecutionStack.keySet()) {
+				confInfo.append("\t\t"); confInfo.append("\t"); confInfo.append(s); confInfo.append("\n");
+			}
+			confInfo.append("\t\t"); confInfo.append("-- Running Operations End -- "); confInfo.append("\n");
+		}
+		return confInfo.toString();
+	}
+	
+	public static boolean shouldThreadChunks() {
+		return GeneralConfig.disableMultiChunk;
+	}
 }
+

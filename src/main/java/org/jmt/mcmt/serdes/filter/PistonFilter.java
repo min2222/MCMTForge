@@ -1,11 +1,11 @@
 package org.jmt.mcmt.serdes.filter;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import org.jmt.mcmt.config.GeneralConfig;
 import org.jmt.mcmt.serdes.ISerDesHookType;
 import org.jmt.mcmt.serdes.SerDesRegistry;
 import org.jmt.mcmt.serdes.pools.ChunkLockPool;
@@ -14,14 +14,16 @@ import org.jmt.mcmt.serdes.pools.ISerDesPool.ISerDesOptions;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 
-public class LegacyFilter implements ISerDesFilter {
+public class PistonFilter implements ISerDesFilter {
 
 	ISerDesPool clp;
 	ISerDesOptions config;
 	
 	@Override
 	public void init() {
+		//TODO Figure out if piston specific chunklock can be used (or just move to using the 
 		clp = SerDesRegistry.getOrCreatePool("LEGACY", ChunkLockPool::new);
 		Map<String, Object> cfg = new HashMap<>();
 		cfg.put("range", "1");
@@ -36,12 +38,9 @@ public class LegacyFilter implements ISerDesFilter {
 	
 	@Override
 	public Set<Class<?>> getFiltered() {
-		return GeneralConfig.teBlackList;
-	}
-	
-	@Override
-	public Set<Class<?>> getAlwaysAsync() {
-		return GeneralConfig.teWhiteList;
+		Set<Class<?>> out = new HashSet<Class<?>>();
+		out.add(PistonMovingBlockEntity.class);
+		return out;
 	}
 
 }

@@ -183,7 +183,7 @@ public class ConfigCommand {
 						BlockPos bp = ((BlockHitResult)rtr).getBlockPos();
 						BlockEntity te = cmdCtx.getSource().getLevel().getBlockEntity(bp);
 						if (te != null && isTickableBe(te)) {
-							boolean willSerial = ASMHookTerminator.filterTE(te);
+							boolean willSerial = ASMHookTerminator.filterTickableEntity(te);
 							message = Component.literal("That TE " + (!willSerial ? "will" : "will not") + " tick fully parallelised");
 							cmdCtx.getSource().sendSuccess(message, true);
 							return 1;

@@ -4,7 +4,7 @@ import javax.management.AttributeChangeNotification;
 import javax.management.MBeanNotificationInfo;
 import javax.management.NotificationBroadcasterSupport;
 
-import org.jmt.mcmt.asmdest.DebugHookTerminator;
+import org.jmt.mcmt.asmdest.ChunkRepairHookTerminator;
 
 import net.minecraft.world.level.ChunkPos;
 import net.minecraftforge.fml.ModList;
@@ -32,13 +32,13 @@ public class MCMTDebug extends NotificationBroadcasterSupport implements MCMTDeb
     @Override
     public String getMainChunkLoadStatus() {
         Thread.currentThread().setContextClassLoader(ccl);
-        return DebugHookTerminator.mainThreadChunkLoad.get() + ":" + DebugHookTerminator.mainThreadChunkLoadCount.get();
+        return ChunkRepairHookTerminator.mainThreadChunkLoad.get() + ":" + ChunkRepairHookTerminator.mainThreadChunkLoadCount.get();
     }
 
     @Override
     public String[] getBrokenChunkList() {
         Thread.currentThread().setContextClassLoader(ccl);
-        return DebugHookTerminator.breaks.stream().map(bcl -> new ChunkPos(bcl.getChunkPos()).toString()).toArray(String[]::new);
+        return ChunkRepairHookTerminator.breaks.stream().map(bcl -> new ChunkPos(bcl.getChunkPos()).toString()).toArray(String[]::new);
     }
 
     @Override
