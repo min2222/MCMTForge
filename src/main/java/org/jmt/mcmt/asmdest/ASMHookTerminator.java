@@ -2,7 +2,6 @@ package org.jmt.mcmt.asmdest;
 
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,7 +23,6 @@ import org.jmt.mcmt.serdes.SerDesRegistry;
 import org.jmt.mcmt.serdes.filter.ISerDesFilter;
 import org.jmt.mcmt.serdes.pools.PostExecutePool;
 
-import net.minecraft.Util;
 import net.minecraft.network.protocol.game.ClientboundBlockEventPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -253,7 +251,7 @@ public class ASMHookTerminator {
             tickConsumer.accept(entityIn);
             return;
         }
-        if (entityIn instanceof Player || entityIn instanceof FallingBlockEntity ) {
+        if (entityIn instanceof Player || entityIn instanceof FallingBlockEntity) {
             tickConsumer.accept(entityIn);
             return;
         }

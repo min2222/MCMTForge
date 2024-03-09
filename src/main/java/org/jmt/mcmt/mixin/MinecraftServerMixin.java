@@ -12,8 +12,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.google.common.collect.Maps;
-
 import net.minecraft.commands.CommandSource;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -26,7 +24,8 @@ import net.minecraft.world.level.Level;
 public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements CommandSource, AutoCloseable {
 
 	@Shadow
-	@Final Map<ResourceKey<Level>, ServerLevel> levels = Maps.newLinkedHashMap();
+	@Final
+	Map<ResourceKey<Level>, ServerLevel> levels;
 	
     public MinecraftServerMixin(String p_18765_) {
 		super(p_18765_);
