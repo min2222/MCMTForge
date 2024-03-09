@@ -22,7 +22,7 @@ public abstract class ServerChunkCacheMixin extends ChunkSource {
 	
     @Inject(method = "tickChunks", at = @At(value = "INVOKE", target = "Ljava/util/Collections;shuffle(Ljava/util/List;)V"))
     private void preChunkTick(CallbackInfo ci) {
-        //ASMHookTerminator.preChunkTick(this.level);
+        ASMHookTerminator.preChunkTick(this.level);
     }
     
     @Redirect(method = "tickChunks", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;tickChunk(Lnet/minecraft/world/level/chunk/LevelChunk;I)V"))

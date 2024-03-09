@@ -3,7 +3,6 @@ package org.jmt.mcmt.serdes.filter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import org.jmt.mcmt.config.GeneralConfig;
 import org.jmt.mcmt.serdes.ISerDesHookType;
@@ -17,31 +16,30 @@ import net.minecraft.world.level.Level;
 
 public class LegacyFilter implements ISerDesFilter {
 
-	ISerDesPool clp;
-	ISerDesOptions config;
-	
-	@Override
-	public void init() {
-		clp = SerDesRegistry.getOrCreatePool("LEGACY", ChunkLockPool::new);
-		Map<String, Object> cfg = new HashMap<>();
-		cfg.put("range", "1");
-		config = clp.compileOptions(cfg);
-	}
-	
-	@Override
-	public void serialise(Runnable task, Object obj, BlockPos bp, Level w, 
-			Consumer<Runnable> executeMultithreaded, ISerDesHookType hookType) {
-		clp.serialise(task, obj, bp, w, executeMultithreaded, config);
-	}
-	
-	@Override
-	public Set<Class<?>> getFiltered() {
-		return GeneralConfig.teBlackList;
-	}
-	
-	@Override
-	public Set<Class<?>> getAlwaysAsync() {
-		return GeneralConfig.teWhiteList;
-	}
+    ISerDesPool clp;
+    ISerDesOptions config;
+
+    @Override
+    public void init() {
+        clp = SerDesRegistry.getOrCreatePool("LEGACY", ChunkLockPool::new);
+        Map<String, Object> cfg = new HashMap<>();
+        cfg.put("range", "1");
+        config = clp.compileOptions(cfg);
+    }
+
+    @Override
+    public void serialise(Runnable task, Object obj, BlockPos bp, Level w, ISerDesHookType hookType) {
+        clp.serialise(task, obj, bp, w, config);
+    }
+
+    @Override
+    public Set<Class<?>> getTargets() {
+        return GeneralConfig.teBlackList;
+    }
+
+    @Override
+    public Set<Class<?>> getWhitelist() {
+        return GeneralConfig.teWhiteList;
+    }
 
 }

@@ -33,7 +33,7 @@ import net.minecraft.world.level.chunk.storage.ChunkSerializer;
  *
  * @author jediminer543
  */
-public class ChunkRepairHookTerminator {
+public class DebugHookTerminator {
 
     private static final Logger LOGGER = LogManager.getLogger();
 

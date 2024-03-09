@@ -50,12 +50,12 @@ public abstract class ServerLevelMixin implements WorldGenLevel {
 	
     @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;popPush(Ljava/lang/String;)V", ordinal = 5))
     private void postChunkTick(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
-        //ASMHookTerminator.postChunkTick(thisWorld);
+        ASMHookTerminator.postChunkTick(thisWorld);
     }
 
     @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V", ordinal = 2))
     private void preEntityTick(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
-    	//ASMHookTerminator.preEntityTick(thisWorld);
+    	ASMHookTerminator.preEntityTick(thisWorld);
     }
     
     //m_184063_
