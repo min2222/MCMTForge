@@ -334,7 +334,7 @@ public class ASMHookTerminator {
 		String taskName = "TETick: " + tte.toString()  + "@" + tte.hashCode();
 		final ISerDesFilter filter = SerDesRegistry.getFilter(SerDesHookTypes.TETick, tte.getClass());
 		if (filter != null) {
-			filter.serialise(tte::tick, tte, ((BlockEntity)tte).getBlockPos(), world, (task) -> {
+			filter.serialise(tte::tick, tte, tte.getPos(), world, (task) -> {
 				execute(taskName, () -> {
 					try {
 						currentTEs.incrementAndGet();
