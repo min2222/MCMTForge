@@ -184,7 +184,6 @@ function initializeCoreMod() {
             	
             	asmapi.log("INFO", "[JMTSUPERTRANS] WorldGetTE Transformer Called");
             	
-            	
             	var instructions = methodNode.instructions;
             	
             	//methodNode.access += opcodes.ACC_SYNCHRONIZED;
