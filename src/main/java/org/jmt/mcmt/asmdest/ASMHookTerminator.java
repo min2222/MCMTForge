@@ -235,7 +235,6 @@ public class ASMHookTerminator {
 			String taskName =  "WorldTick: " + serverworld.toString() + "@" +
 					// append world's dimension name to world tick task
 					serverworld.dimension().location().toString();
-
 			execute(taskName, () -> {
 				try {
 					currentWorlds.incrementAndGet();
@@ -384,4 +383,3 @@ public class ASMHookTerminator {
 		return GeneralConfig.disableMultiChunk;
 	}
 }
-
