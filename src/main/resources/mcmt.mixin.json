@@ -7,15 +7,20 @@
 		"ChunkAccessMixin",
 		"ChunkHolderMixin",
 		"ChunkMapMixin",
+		"CollectingNeighborUpdaterMixin",
 		"EntityLookupMixin",
 		"EntitySectionStorageMixin",
 		"EntityTickListMixin",
+		"FastUtilsMixin",
 		"ItemEntityMixin",
+		"LegacyRandomSourceMixin",
 		"LevelMixin",
 		"LevelTicksMixin",
 		"MinecraftServerMixin",
+		"PathFinderMixin",
 		"ServerChunkCacheMixin",
 		"ServerLevelMixin",
+		"SyncAllMixin",
 		"TickingTrackerMixin"
 	],
 	"client": [],
@@ -23,5 +28,6 @@
 	"injectors": {
 		"defaultRequire": 1
 	},
-	"refmap": "mcmt.refmap.json"
+	"refmap": "mcmt.refmap.json",
+	"plugin": "org.jmt.mcmt.mixin.SynchronisePlugin"
 }
