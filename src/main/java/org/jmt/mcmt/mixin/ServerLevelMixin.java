@@ -1,14 +1,19 @@
 package org.jmt.mcmt.mixin;
 
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.jmt.mcmt.asmdest.ASMHookTerminator;
+import org.jmt.mcmt.asmdest.ConcurrentCollections;
 import org.jmt.mcmt.paralelised.ParaServerChunkProvider;
 import org.objectweb.asm.Opcodes;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -20,6 +25,7 @@ import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.entity.ChunkStatusUpdateListener;
@@ -30,6 +36,11 @@ import net.minecraft.world.level.storage.LevelStorageSource;
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin implements WorldGenLevel {
     
+	@Shadow
+    @Final
+	@Mutable
+	Set<Mob> navigatingMobs = ConcurrentCollections.newHashSet();
+	
 	ServerLevel thisWorld = (ServerLevel) (Object) this;
 	
 	@Redirect(method = "<init>", at = @At(value = "NEW", target = "(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/storage/LevelStorageSource$LevelStorageAccess;Lcom/mojang/datafixers/DataFixer;Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplateManager;Ljava/util/concurrent/Executor;Lnet/minecraft/world/level/chunk/ChunkGenerator;IIZLnet/minecraft/server/level/progress/ChunkProgressListener;Lnet/minecraft/world/level/entity/ChunkStatusUpdateListener;Ljava/util/function/Supplier;)Lnet/minecraft/server/level/ServerChunkCache;"))
