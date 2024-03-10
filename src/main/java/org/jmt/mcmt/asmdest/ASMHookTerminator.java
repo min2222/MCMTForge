@@ -121,7 +121,7 @@ public class ASMHookTerminator {
                 throw e;
             }
             finally {
-				net.minecraftforge.event.ForgeEventFactory.onPostLevelTick(serverworld,  hasTimeLeft);
+				net.minecraftforge.event.ForgeEventFactory.onPostLevelTick(serverworld, hasTimeLeft);
             }
             return;
         }
@@ -129,7 +129,7 @@ public class ASMHookTerminator {
             //LOGGER.warn("Multiple servers?");
             GeneralConfig.disabled = true;
             serverworld.tick(hasTimeLeft);
-			net.minecraftforge.event.ForgeEventFactory.onPostLevelTick(serverworld,  hasTimeLeft);
+			net.minecraftforge.event.ForgeEventFactory.onPostLevelTick(serverworld, hasTimeLeft);
             return;
         } else {
             String taskName = null;
@@ -236,7 +236,7 @@ public class ASMHookTerminator {
         }
         String taskName = null;
         if (GeneralConfig.opsTracing) {
-            taskName = "EntityTick: " + /*entityIn.toString() + KG: Wayyy too slow. Maybe for debug but needs to be done via flag in that circumstance */ "@" + entityIn.hashCode();
+            taskName = "EntityTick: " + "@" + entityIn.hashCode();
             currentTasks.add(taskName);
         }
         String finalTaskName = taskName;
@@ -259,7 +259,6 @@ public class ASMHookTerminator {
     }
 
     public static void postEntityTick(ServerLevel world) {
-		//world.random = RandomSource.createThreadSafe();
         if (!GeneralConfig.disabled && !GeneralConfig.disableEntity) {
             var phaser = sharedPhasers.get(world);
             phaser.arriveAndDeregister();

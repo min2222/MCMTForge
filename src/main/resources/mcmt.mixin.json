@@ -7,6 +7,7 @@
 		"ChunkAccessMixin",
 		"ChunkHolderMixin",
 		"ChunkMapMixin",
+		"CollectingNeighborUpdaterMixin",
 		"EntityLookupMixin",
 		"EntitySectionStorageMixin",
 		"EntityTickListMixin",

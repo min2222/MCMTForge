@@ -30,7 +30,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 @Mod("jmt_mcmt")
 public class MCMT
 {
-	
     // Directly reference a log4j logger.
     public static final Logger LOGGER = LogManager.getLogger();
 
@@ -85,22 +84,10 @@ public class MCMT
         ASMHookTerminator.setupThreadPool(GeneralConfig.getParallelism());
     }
     
-    /* 1.16.1 code; AKA the only thing that changed  */
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
     	LOGGER.info("MCMT Registering Commands");
     	CommandDispatcher<CommandSourceStack> commandDispatcher = event.getDispatcher();
         ConfigCommand.register(commandDispatcher);
     }
-    /* */
-    
-    /*// TestCodePleaseIgnore
-    @SubscribeEvent
-    public void onWorldPostTick(TickEvent.WorldTickEvent event) {
-        // do something when the server starts
-    	if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END) {
-    		Thread.dumpStack();
-    	}
-    }
-    */
 }
