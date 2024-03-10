@@ -41,5 +41,4 @@ public class LegacyFilter implements ISerDesFilter {
     public Set<Class<?>> getWhitelist() {
         return GeneralConfig.teWhiteList;
     }
-
 }

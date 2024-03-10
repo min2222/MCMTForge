@@ -76,14 +76,6 @@ public class ASMHookTerminator {
     	p_137497_.getCause().printStackTrace(System.out);
     }
 
-    /**
-     * Creates and sets up the thread pool
-     */
-    static {
-        // Must be static here due to class loading shenanagins
-        // setupThreadPool(4);
-    }
-
     static Map<String, Set<Thread>> mcThreadTracker = new ConcurrentHashMap<String, Set<Thread>>();
 
     // Statistics
@@ -248,11 +240,11 @@ public class ASMHookTerminator {
     	serverworld.random = RandomSource.createThreadSafe();
     	entityIn.random = RandomSource.createThreadSafe();
         if (GeneralConfig.disabled || GeneralConfig.disableEntity) {
-            tickConsumer.accept(entityIn);
+        	tickConsumer.accept(entityIn);
             return;
         }
         if (entityIn instanceof Player || entityIn instanceof FallingBlockEntity) {
-            tickConsumer.accept(entityIn);
+        	tickConsumer.accept(entityIn);
             return;
         }
         String taskName = null;
@@ -269,7 +261,7 @@ public class ASMHookTerminator {
                 if (filter != null) {
                     filter.serialise(() -> tickConsumer.accept(entityIn), entityIn, entityIn.blockPosition(), serverworld, SerDesHookTypes.EntityTick);
                 } else {
-                    tickConsumer.accept(entityIn);
+                	tickConsumer.accept(entityIn);
                 }
             } finally {
                 if (GeneralConfig.opsTracing) currentTasks.remove(finalTaskName);

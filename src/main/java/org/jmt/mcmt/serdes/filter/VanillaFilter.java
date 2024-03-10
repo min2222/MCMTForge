@@ -19,5 +19,4 @@ public class VanillaFilter implements ISerDesFilter {
         }
         return ClassMode.UNKNOWN;
     }
-
 }

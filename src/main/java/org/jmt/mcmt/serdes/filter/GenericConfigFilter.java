@@ -98,5 +98,4 @@ public class GenericConfigFilter implements ISerDesFilter {
     public void serialise(Runnable task, Object obj, BlockPos bp, Level w, ISerDesHookType hookType) {
         primePool.serialise(task, hookType, bp, w, primeOpts);
     }
-
 }
