@@ -11,12 +11,17 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
 
 @Mixin(Level.class)
 public abstract class LevelMixin implements LevelAccessor, AutoCloseable {
+	
+	@SuppressWarnings("deprecation")
+	@Shadow
+	public RandomSource random = RandomSource.createThreadSafe();
 	
     @Shadow
     @Final

@@ -13,7 +13,7 @@ import net.minecraft.world.level.redstone.NeighborUpdater;
 
 @Mixin(CollectingNeighborUpdater.class)
 public abstract class CollectingNeighborUpdaterMixin implements NeighborUpdater {
-
+	
     @Shadow
     @Final
     @Mutable

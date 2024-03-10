@@ -26,7 +26,6 @@ import org.jmt.mcmt.serdes.pools.PostExecutePool;
 import net.minecraft.network.protocol.game.ClientboundBlockEventPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Player;
@@ -37,7 +36,6 @@ import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 
-@SuppressWarnings("deprecation")
 public class ASMHookTerminator {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -101,10 +99,7 @@ public class ASMHookTerminator {
 
     static long tickStart = 0;
 
-    public static void preTick(int size, MinecraftServer server) {
-    	server.levels.forEach((t, u) -> {
-    		u.random = RandomSource.createThreadSafe();
-    	});
+    public static void preTick(MinecraftServer server) {
         if (!GeneralConfig.disabled && !GeneralConfig.disableWorld) {
             if (worldPhaser != null) {
                 //LOGGER.warn("Multiple servers?");
@@ -112,21 +107,21 @@ public class ASMHookTerminator {
             } else {
                 tickStart = System.nanoTime();
                 isTicking.set(true);
-                worldPhaser = new Phaser(size + 1);
+                worldPhaser = new Phaser(server.levels.size() + 1);
                 mcs = server;
             }
         }
     }
 
     public static void callTick(ServerLevel serverworld, BooleanSupplier hasTimeLeft, MinecraftServer server) {
-    	server.levels.forEach((t, u) -> {
-    		u.random = RandomSource.createThreadSafe();
-    	});
         if (GeneralConfig.disabled || GeneralConfig.disableWorld) {
             try {
                 serverworld.tick(hasTimeLeft);
             } catch (Exception e) {
                 throw e;
+            }
+            finally {
+				net.minecraftforge.event.ForgeEventFactory.onPostLevelTick(serverworld,  hasTimeLeft);
             }
             return;
         }
@@ -134,6 +129,7 @@ public class ASMHookTerminator {
             //LOGGER.warn("Multiple servers?");
             GeneralConfig.disabled = true;
             serverworld.tick(hasTimeLeft);
+			net.minecraftforge.event.ForgeEventFactory.onPostLevelTick(serverworld,  hasTimeLeft);
             return;
         } else {
             String taskName = null;
@@ -160,9 +156,6 @@ public class ASMHookTerminator {
     public static int lastTickTimeFill = 0;
 
     public static void postTick(MinecraftServer server) {
-    	server.levels.forEach((t, u) -> {
-    		u.random = RandomSource.createThreadSafe();
-    	});
         if (!GeneralConfig.disabled && !GeneralConfig.disableWorld) {
             if (mcs != server) {
                 //LOGGER.warn("Multiple servers?");
@@ -187,7 +180,6 @@ public class ASMHookTerminator {
     }
 
     public static void preChunkTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
         Phaser phaser; // Keep a party throughout 3 ticking phases
         if (!GeneralConfig.disabled && !GeneralConfig.disableEnvironment) {
             phaser = new Phaser(2);
@@ -198,7 +190,6 @@ public class ASMHookTerminator {
     }
 
     public static void callTickChunks(ServerLevel world, LevelChunk chunk, int k) {
-		world.random = RandomSource.createThreadSafe();
         if (GeneralConfig.disabled || GeneralConfig.disableEnvironment) {
             world.tickChunk(chunk, k);
             return;
@@ -223,7 +214,6 @@ public class ASMHookTerminator {
     }
 
     public static void postChunkTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
         if (!GeneralConfig.disabled && !GeneralConfig.disableEnvironment) {
             var phaser = sharedPhasers.get(world);
             phaser.arriveAndDeregister();
@@ -232,18 +222,15 @@ public class ASMHookTerminator {
     }
 
     public static void preEntityTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
         if (!GeneralConfig.disabled && !GeneralConfig.disableEntity) sharedPhasers.get(world).register();
     }
 
     public static void callEntityTick(Consumer<Entity> tickConsumer, Entity entityIn, ServerLevel serverworld) {
-    	serverworld.random = RandomSource.createThreadSafe();
-    	entityIn.random = RandomSource.createThreadSafe();
         if (GeneralConfig.disabled || GeneralConfig.disableEntity) {
         	tickConsumer.accept(entityIn);
             return;
         }
-        if (entityIn instanceof Player || entityIn instanceof FallingBlockEntity) {
+        if (entityIn instanceof Player || entityIn instanceof FallingBlockEntity) {        	
         	tickConsumer.accept(entityIn);
             return;
         }
@@ -272,7 +259,7 @@ public class ASMHookTerminator {
     }
 
     public static void postEntityTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
+		//world.random = RandomSource.createThreadSafe();
         if (!GeneralConfig.disabled && !GeneralConfig.disableEntity) {
             var phaser = sharedPhasers.get(world);
             phaser.arriveAndDeregister();
@@ -281,12 +268,10 @@ public class ASMHookTerminator {
     }
 
     public static void preBlockEntityTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
         if (!GeneralConfig.disabled && !GeneralConfig.disableTileEntity) sharedPhasers.get(world).register();
     }
 
     public static void callBlockEntityTick(TickingBlockEntity tte, Level world) {
-		world.random = RandomSource.createThreadSafe();
         if ((world instanceof ServerLevel) && tte instanceof LevelChunk.RebindableTickingBlockEntityWrapper && (((LevelChunk.RebindableTickingBlockEntityWrapper) tte).ticker instanceof LevelChunk.BoundTickingBlockEntity<?>)) {
             if (GeneralConfig.disabled || GeneralConfig.disableTileEntity) {
                 tte.tick();
@@ -323,7 +308,6 @@ public class ASMHookTerminator {
 
     //not used
 	public static void sendQueuedBlockEvents(Deque<BlockEventData> d, ServerLevel sw) {
-		sw.random = RandomSource.createThreadSafe();
 		Iterator<BlockEventData> bed = d.iterator();
 		while(bed.hasNext()) {
 			BlockEventData blockeventdata = bed.next();
@@ -358,7 +342,6 @@ public class ASMHookTerminator {
     }
 
     public static void postBlockEntityTick(ServerLevel world) {
-		world.random = RandomSource.createThreadSafe();
         if (!GeneralConfig.disabled && !GeneralConfig.disableTileEntity) {
             var phaser = sharedPhasers.get(world);
             phaser.arriveAndDeregister();
