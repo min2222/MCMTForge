@@ -6,6 +6,8 @@
 	"mixins": [
 		"EntityLookupMixin",
 		"EntityMixin",
+		"EntitySectionStorageMixin",
+		"EntityTickListMixin",
 		"LevelMixin",
 		"MinecraftServerMixin",
 		"ServerChunkCacheMixin",
