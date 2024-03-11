@@ -156,8 +156,6 @@ function initializeCoreMod() {
 						freeref = asmapi.findFirstMethodCallAfter(method, MethodType.VIRTUAL, classNode.name, 
 													targetMethodFree, targetMethodDesc, currentIdx);
 					}
-					
-
 				}
             	
             	asmapi.log("INFO", "[JMTSUPERTRANS] PalettedContainerReLock Transformer Complete");
