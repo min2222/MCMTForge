@@ -12,6 +12,7 @@
 		"DistanceManagerMixin",
 		"DynamicGraphMinFixedPointMixin",
 		"EntityLookupMixin",
+		"EntityMixin",
 		"EntitySectionStorageMixin",
 		"EntityTickListMixin",
 		"FastUtilsMixin",
