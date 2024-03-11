@@ -138,7 +138,6 @@ public class ParaServerChunkProvider extends ServerChunkCache {
             return ccl.getChunk();
         }
         return null;
-
     }
 
     public void cacheChunk(long chunkPos, ChunkAccess chunk, ChunkStatus status) {
