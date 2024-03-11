@@ -18,6 +18,7 @@
 		"LegacyRandomSourceMixin",
 		"LevelMixin",
 		"LevelTicksMixin",
+		"LivingEntityMixin",
 		"MinecraftServerMixin",
 		"PathFinderMixin",
 		"ServerChunkCacheMixin",
