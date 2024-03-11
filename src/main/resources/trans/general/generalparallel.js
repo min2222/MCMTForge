@@ -162,7 +162,8 @@ function initializeCoreMod() {
             	return methodNode;
             }
     	},
-		'TicketManagerCollections': {
+    	//distancemanager mixin
+		/*'TicketManagerCollections': {
 			'target': {
                 'type': 'CLASS',
                 'name': 'net.minecraft.server.level.DistanceManager'
@@ -177,13 +178,7 @@ function initializeCoreMod() {
     					continue;
     				}
 					asmapi.log("INFO", "[JMTSUPERTRANS] TicketManagerCollections Hit Init");
-					/*
-					var insn = methodNode.instructions.getFirst();
-					while (insn != null) {
-						printInsnNode(insn);
-						insn = insn.getNext();
-					}
-					*/
+
 					toParallelHashMaps(methodNode);
 					toParallelDeque(methodNode);
 					toParallelHashSets(methodNode);
@@ -193,7 +188,7 @@ function initializeCoreMod() {
             	
             	return classNode;
             }
-		},
+		},*/
 		'ThreadTaskExecutorCollections': {
 			'target': {
                 'type': 'CLASS',
