@@ -158,6 +158,7 @@ function initializeCoreMod() {
 					}
 					
 
+				}
             	
             	asmapi.log("INFO", "[JMTSUPERTRANS] PalettedContainerReLock Transformer Complete");
             	
