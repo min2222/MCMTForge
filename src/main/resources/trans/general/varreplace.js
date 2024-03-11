@@ -326,7 +326,8 @@ function initializeCoreMod() {
             	return classNode;
             }
     	},*/
-    	'LevelBasedGraph-UpdatesByLevel': {
+    	//dynamicgraphminfixedpoint mixin
+    	/*'LevelBasedGraph-UpdatesByLevel': {
             'target': {
                 'type': 'METHOD',
                 'class': 'net.minecraft.world.level.lighting.DynamicGraphMinFixedPoint',
@@ -409,7 +410,7 @@ function initializeCoreMod() {
             	
             	return methodNode;
             }
-    	},
+    	},*/
     	'RegionSectionCache-data': {
             'target': {
                 'type': 'METHOD',

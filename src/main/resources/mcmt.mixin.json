@@ -9,6 +9,7 @@
 		"ChunkMapMixin",
 		"CollectingNeighborUpdaterMixin",
 		"DistanceManagerMixin",
+		"DynamicGraphMinFixedPointMixin",
 		"EntityLookupMixin",
 		"EntitySectionStorageMixin",
 		"EntityTickListMixin",
