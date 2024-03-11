@@ -72,172 +72,8 @@ function synchronizeMethod(methodNode, debugLine) {
 
 function initializeCoreMod() {
     return {
-	    /*'ServerWorldBlockPosFastUtkill': {
-    		'target': {
-                'type': 'CLASS',
-                'name': 'net.minecraft.server.level.ServerLevel'
-            },
-            "transformer": function(classNode) {
-            	print("[JMTSUPERTRANS] ServerWorldBlockPosFastUtkill Transformer Called");
-            	
-            	var opcodes = Java.type('org.objectweb.asm.Opcodes');
-            	var asmapi = Java.type('net.minecraftforge.coremod.api.ASMAPI');
-            	var InsnList = Java.type("org.objectweb.asm.tree.InsnList");
-            	var InsnNode = Java.type("org.objectweb.asm.tree.InsnNode");
-            	var VarInsnNode = Java.type("org.objectweb.asm.tree.VarInsnNode");
-            	var MethodType = asmapi.MethodType;
-            	
-            	var tgt = "it/unimi/dsi/fastutil/objects/ObjectLinkedOpenHashSet";
-            	var replace = "java/util/Deque";
-            	
-            	var fields = classNode.fields;
-            	
-            	var tgtField = asmapi.mapField("f_8556_");
-            	
-            	for (var i in fields) {
-            		var fieldNode = fields[i];
-            		
-            		if (fieldNode.name != tgtField) {
-            			continue;
-            		}
-            		
-            		fieldNode.signature = fieldNode.signature.replace(tgt, replace);
-            		fieldNode.desc = fieldNode.desc.replace(tgt, replace);
-            		print(fieldNode.name + "|" + fieldNode.desc + "|" + fieldNode.signature);
-            	}
-            	
-            	var methods = classNode.methods;
-            	
-            	var targetMethods = {
-        			"<init>": {
-        				"desc": "(Lnet/minecraft/server/MinecraftServer;Ljava/util/concurrent/Executor;Lnet/minecraft/world/level/storage/LevelStorageSource$LevelStorageAccess;Lnet/minecraft/world/level/storage/ServerLevelData;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/level/dimension/LevelStem;)V",
-        				"fallbackdesc": "(Lnet/minecraft/server/MinecraftServer;Ljava/util/concurrent/Executor;Lnet/minecraft/world/level/storage/LevelStorageSource$LevelStorageAccess;Lnet/minecraft/world/level/storage/ServerLevelData;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/level/dimension/LevelStem;Lnet/minecraft/server/level/progress/ChunkProgressListener;ZJLjava/util/List;Z)V",
-        				"fallbackdesc2": "(Lnet/minecraft/server/MinecraftServer;Ljava/util/concurrent/Executor;Lnet/minecraft/world/level/storage/LevelStorageSource$LevelStorageAccess;Lnet/minecraft/world/level/storage/ServerLevelData;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/world/level/dimension/LevelStem;Lnet/minecraft/server/level/progress/ChunkProgressListener;ZJLjava/util/List;Z)V",
-        				"update": function(methodNode) {
-        					var instructions = methodNode.instructions;
-        					
-        					var initTgt = asmapi.findFirstMethodCall(methodNode, MethodType.SPECIAL, tgt, "<init>", "()V");
-        					//var newTgt = asmapi.findFirstInstructionBefore(methodNode, opcodes.NEW, instructions.indexOf(initTgt))
-        					var putTgt = asmapi.findFirstInstructionAfter(methodNode, opcodes.PUTFIELD, instructions.indexOf(initTgt))
-        					
-        					var newTgt = initTgt;
-        					
-        					while (newTgt.getOpcode() != opcodes.NEW) {
-        						newTgt = newTgt.getPrevious();
-        					}
-        					
-        					if (initTgt == null || newTgt == null || putTgt == null) {
-        						print("[JMTSUPERTRANS] MISSING TARGET INSN - INIT");
-        						return false;
-        					}
-        					
-        					newTgt.desc = "java/util/concurrent/ConcurrentLinkedDeque";
-        					initTgt.owner = "java/util/concurrent/ConcurrentLinkedDeque";
-    						putTgt.desc = putTgt.desc.replace(tgt, replace);
-    						
-    						return true;
-        				}
-        			},
-            	}
-            	
-            	targetMethods[asmapi.mapMethod("m_7696_")] = {
-            			"desc": "(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;II)V",
-            			"update": function(methodNode) {
-            				
-            				var getTgt = asmapi.findFirstInstructionAfter(methodNode, opcodes.GETFIELD, 0)
-            				var addTgt = asmapi.findFirstMethodCall(methodNode, MethodType.VIRTUAL, tgt, "add", "(Ljava/lang/Object;)Z");
-            				
-            				if (addTgt == null || getTgt == null) {
-        						print("[JMTSUPERTRANS] MISSING TARGET INSN - addBlockEvent");
-        						return false;
-        					}
-            				
-            				getTgt.desc = getTgt.desc.replace(tgt, replace);
-            				addTgt.owner = replace;
-            				addTgt.setOpcode(opcodes.INVOKEINTERFACE);
-            				addTgt.itf = true;
-            				
-            				return true;
-            			}
-            	}
-            	
-            	targetMethods[asmapi.mapMethod("m_8722_")] = {
-            			"desc": "(Lnet/minecraft/world/level/levelgen/structure/BoundingBox;)V",
-            			"update": function(methodNode) {
-            				
-            				var getTgt = asmapi.findFirstInstructionAfter(methodNode, opcodes.GETFIELD, 0)
-            				var addTgt = asmapi.findFirstMethodCall(methodNode, MethodType.VIRTUAL, tgt, "removeIf", "(Ljava/util/function/Predicate;)Z");
-            				
-            				if (addTgt == null || getTgt == null) {
-        						print("[JMTSUPERTRANS] MISSING TARGET INSN - addBlockEvent");
-        						return false;
-        					}
-            				
-            				getTgt.desc = getTgt.desc.replace(tgt, replace);
-            				addTgt.owner = replace;
-            				addTgt.setOpcode(opcodes.INVOKEINTERFACE);
-            				addTgt.itf = true;
-            				
-            				return true;
-            			}
-            	}
-            	
-            	targetMethods[asmapi.mapMethod("m_8807_")] = {
-            			"desc": "()V",
-            			"update": function(methodNode) {
-            				var instructions = methodNode.instructions;
-            				
-            				var getTgt = asmapi.findFirstInstructionAfter(methodNode, opcodes.GETFIELD, 0)
-            				
-            				var call = asmapi.buildMethodCall("org/jmt/mcmt/asmdest/ASMHookTerminator", 
-            						"sendQueuedBlockEvents", "(Ljava/util/Deque;Lnet/minecraft/server/level/ServerLevel;)V",  MethodType.STATIC)
-            						
-            				if (getTgt == null) {
-        						print("[JMTSUPERTRANS] MISSING TARGET INSN - addBlockEvent");
-        						return false;
-        					}
-            				
-            				getTgt.desc = getTgt.desc.replace(tgt, replace);
-            						
-            				var il = new InsnList();
-            				il.add(new VarInsnNode(opcodes.ALOAD, 0));
-            				il.add(call);
-            				il.add(new InsnNode(opcodes.RETURN));
-            				
-            				instructions.insert(getTgt, il);
-            				
-            				return true;
-            			}
-            	}
-            	
-            	for (var i in methods) {
-            		var methodNode = methods[i];
-            		
-            		var op = targetMethods[methodNode.name];
-            		if (op != undefined && (op.desc == methodNode.desc 
-            				|| op.fallbackdesc == methodNode.desc || op.fallbackdesc2 == methodNode.desc)) {
-            			if (op.fallbackdesc == methodNode.desc || op.fallbackdesc2 == methodNode.desc) {
-            				print("[JMTSUPERTRANS] 1.16 WARNING")
-            			}
-            			print("[JMTSUPERTRANS] updating method: " + methodNode.name + methodNode.desc)
-            			var result = op.update(methodNode)
-            			op.result = result;
-            		}
-            	}
-            	
-            	for (var o in targetMethods) {
-            		if (targetMethods[o].result != true) {
-            			print("[JMTSUPERTRANS] failed to update method: " + o + targetMethods[o].desc)
-            		}
-            	}
-            	
-            	
-            	
-            	return classNode;
-            }
-    	},
     	//entitylookup mixin
-    	'ServerWorldEntitiesByIdFastUtkill': {
+	    /*'ServerWorldEntitiesByIdFastUtkill': {
     		'target': {
                 'type': 'CLASS',
                 'name': 'net.minecraft.server.level.ServerLevel'
@@ -326,8 +162,7 @@ function initializeCoreMod() {
             	return classNode;
             }
     	},*/
-    	//dynamicgraphminfixedpoint mixin
-    	/*'LevelBasedGraph-UpdatesByLevel': {
+    	'LevelBasedGraph-UpdatesByLevel': {
             'target': {
                 'type': 'METHOD',
                 'class': 'net.minecraft.world.level.lighting.DynamicGraphMinFixedPoint',
@@ -410,7 +245,7 @@ function initializeCoreMod() {
             	
             	return methodNode;
             }
-    	},*/
+    	},
     	'RegionSectionCache-data': {
             'target': {
                 'type': 'METHOD',

@@ -162,8 +162,7 @@ function initializeCoreMod() {
             	return methodNode;
             }
     	},
-    	//distancemanager mixin
-		/*'TicketManagerCollections': {
+    	'TicketManagerCollections': {
 			'target': {
                 'type': 'CLASS',
                 'name': 'net.minecraft.server.level.DistanceManager'
@@ -188,7 +187,7 @@ function initializeCoreMod() {
             	
             	return classNode;
             }
-		},*/
+		},
 		'ThreadTaskExecutorCollections': {
 			'target': {
                 'type': 'CLASS',
