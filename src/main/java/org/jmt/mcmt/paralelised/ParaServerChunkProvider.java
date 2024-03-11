@@ -57,7 +57,6 @@ public class ParaServerChunkProvider extends ServerChunkCache {
     Marker chunkCleaner = MarkerManager.getMarker("ChunkCleaner");
     private final Level world;
 
-    /* 1.16.1 code; AKA the only thing that changed  */
     public ParaServerChunkProvider(ServerLevel world, LevelStorageSource.LevelStorageAccess session, DataFixer dataFixer, StructureTemplateManager structureManager, Executor workerExecutor, ChunkGenerator chunkGenerator, int viewDistance, int simulationDistance, boolean dsync, ChunkProgressListener worldGenerationProgressListener, ChunkStatusUpdateListener chunkStatusChangeListener, Supplier<DimensionDataStorage> persistentStateManagerFactory) {
         super(world, session, dataFixer, structureManager, workerExecutor, chunkGenerator, viewDistance, simulationDistance, dsync, worldGenerationProgressListener, chunkStatusChangeListener, persistentStateManagerFactory);
         this.world = world;
