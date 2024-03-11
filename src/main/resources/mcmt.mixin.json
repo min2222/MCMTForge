@@ -4,6 +4,7 @@
 	"package": "org.jmt.mcmt.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"mixins": [
+		"ChunkMapMixin",
 		"EntityLookupMixin",
 		"EntityMixin",
 		"EntitySectionStorageMixin",

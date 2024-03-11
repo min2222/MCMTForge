@@ -17,13 +17,13 @@ import net.minecraft.world.level.chunk.storage.ChunkStorage;
 
 @Mixin(ChunkMap.class)
 public abstract class ChunkMapMixin extends ChunkStorage implements ChunkHolder.PlayerProvider {
-
-    public ChunkMapMixin(Path p_196912_, DataFixer p_196913_, boolean p_196914_) {
-		super(p_196912_, p_196913_, p_196914_);
-	}
-
+	
 	@Shadow
     @Final
     @Mutable
     private Int2ObjectMap<ChunkMap.TrackedEntity> entityMap = new Int2ObjectConcurrentHashMap<>();
+
+    public ChunkMapMixin(Path p_196912_, DataFixer p_196913_, boolean p_196914_) {
+		super(p_196912_, p_196913_, p_196914_);
+	}
 }
