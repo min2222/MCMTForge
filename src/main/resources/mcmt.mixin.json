@@ -18,6 +18,7 @@
 		"FastUtilsMixin",
 		"ItemEntityMixin",
 		"LegacyRandomSourceMixin",
+		"LevelChunkMixin",
 		"LevelMixin",
 		"LevelTicksMixin",
 		"MinecraftServerMixin",
