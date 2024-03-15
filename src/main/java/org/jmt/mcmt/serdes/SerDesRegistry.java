@@ -267,8 +267,7 @@ public class SerDesRegistry {
                     );
 
                     AutoFilter.singleton().addClassToBlacklist(obj.getClass());
-                    // TODO: this could leave a tick in an incomplete state. should the full exception be thrown?
-                    if (e instanceof RuntimeException) throw e;
+                    e.getCause().printStackTrace(System.out);
                 }
             }
         }

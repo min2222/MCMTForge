@@ -14,6 +14,32 @@ function synchronizeMethod(debugLine) {
 	}
 }
 
+function synchronizeClass(debugLine) {
+	return function(classNode) {
+		var asmapi = Java.type('net.minecraftforge.coremod.api.ASMAPI');
+		var opcodes = Java.type('org.objectweb.asm.Opcodes');
+		
+		
+		var posfilter = opcodes.ACC_PUBLIC;
+		var negfilter = opcodes.ACC_STATIC | opcodes.ACC_SYNTHETIC | opcodes.ACC_NATIVE | opcodes.ACC_ABSTRACT
+			| opcodes.ACC_ABSTRACT | opcodes.ACC_BRIDGE;
+		
+		asmapi.log("INFO", "[JMTSUPERTRANS] " + debugLine + " Transformer Called");
+		
+		for (var i in classNode.methods) {
+			var methodNode = classNode.methods[i];
+			if ((methodNode.access & posfilter) == posfilter && (methodNode.access & negfilter) == 0 && !methodNode.name.equals("<init>")) {
+				asmapi.log("INFO", "[JMTSUPERTRANS] " + debugLine + " Transformer Hit " + methodNode.name);
+				methodNode.access += opcodes.ACC_SYNCHRONIZED;
+			}
+		}
+		
+		asmapi.log("INFO", "[JMTSUPERTRANS] " + debugLine + " Transformer Complete");
+		
+		return classNode;
+	}
+}
+
 function initializeCoreMod() {
     return {
     	'ServerExecutionThread': {
@@ -188,14 +214,26 @@ function initializeCoreMod() {
             },
             "transformer": synchronizeMethod("DynamicGraphMinFixedPointRunUpdates")
     	},
-    	'RaidAddWaveMob': {
+		'Raid': {
             'target': {
-                'type': 'METHOD',
-                'class': 'net.minecraft.world.entity.raid.Raid',
-                "methodName": "m_37718_",
-        		"methodDesc": "(ILnet/minecraft/world/entity/raid/Raider;Z)Z"
+                'type': 'CLASS',
+                'name': 'net.minecraft.world.level.entity.Raid',
             },
-            "transformer": synchronizeMethod("RaidAddWaveMob")
+            "transformer": synchronizeClass("Raid")
+    	},
+    	'WalkNodeEvaluator': {
+            'target': {
+                'type': 'CLASS',
+                'name': 'net.minecraft.world.level.pathfinder.WalkNodeEvaluator',
+            },
+            "transformer": synchronizeClass("WalkNodeEvaluator")
+    	},
+    	'BinaryHeap': {
+            'target': {
+                'type': 'CLASS',
+                'name': 'net.minecraft.world.level.pathfinder.BinaryHeap',
+            },
+            "transformer": synchronizeClass("BinaryHeap")
     	},
 	}
 }
