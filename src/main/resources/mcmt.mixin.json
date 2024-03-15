@@ -23,6 +23,7 @@
 		"LevelTicksMixin",
 		"MinecraftServerMixin",
 		"PathFinderMixin",
+		"RaidMixin",
 		"SectionStorageMixin",
 		"ServerChunkCacheMixin",
 		"ServerLevelMixin",

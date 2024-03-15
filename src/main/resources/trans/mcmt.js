@@ -228,12 +228,12 @@ function initializeCoreMod() {
             },
             "transformer": synchronizeClass("WalkNodeEvaluator")
     	},
-    	'BinaryHeap': {
+    	'CollectingNeighborUpdater': {
             'target': {
                 'type': 'CLASS',
-                'name': 'net.minecraft.world.level.pathfinder.BinaryHeap',
+                'name': 'net.minecraft.world.level.redstone.CollectingNeighborUpdater',
             },
-            "transformer": synchronizeClass("BinaryHeap")
+            "transformer": synchronizeClass("CollectingNeighborUpdater")
     	},
 	}
 }
