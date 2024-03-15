@@ -1,3 +1,19 @@
+function synchronizeMethod(debugLine) {
+	return function(methodNode) {
+		var asmapi = Java.type('net.minecraftforge.coremod.api.ASMAPI');
+		
+		asmapi.log("INFO", "[JMTSUPERTRANS] " + debugLine + " Transformer Called");
+		
+		var opcodes = Java.type('org.objectweb.asm.Opcodes');
+		
+		methodNode.access += opcodes.ACC_SYNCHRONIZED;
+		
+		asmapi.log("INFO", "[JMTSUPERTRANS] " + debugLine + " Transformer Complete");
+		
+		return methodNode;
+	}
+}
+
 function initializeCoreMod() {
     return {
     	'ServerExecutionThread': {
@@ -162,6 +178,24 @@ function initializeCoreMod() {
             	
             	return classNode;
             }
+    	},
+    	'ServerTickListGetPending': {
+            'target': {
+                'type': 'METHOD',
+                'class': 'net.minecraft.world.level.lighting.DynamicGraphMinFixedPoint',
+                "methodName": "m_75588_",
+        		"methodDesc": "(I)I"
+            },
+            "transformer": synchronizeMethod("DynamicGraphMinFixedPointRunUpdates")
+    	},
+    	'RaidAddWaveMob': {
+            'target': {
+                'type': 'METHOD',
+                'class': 'net.minecraft.world.entity.raid.Raid',
+                "methodName": "m_37718_",
+        		"methodDesc": "(ILnet/minecraft/world/entity/raid/Raider;Z)Z"
+            },
+            "transformer": synchronizeMethod("RaidAddWaveMob")
     	},
 	}
 }
